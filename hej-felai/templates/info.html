@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deltagare</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Deltagare</h1>
+      <p id="count"></p>
+    </div>
+    <ul class="info-list" id="list"></ul>
+  </div>
+  <script>
+    async function load() {
+      try {
+        const resp = await fetch('/api/checkins');
+        const people = await resp.json();
+        document.getElementById('count').textContent = people.length + ' incheckade';
+        const list = document.getElementById('list');
+        list.innerHTML = people.map(p => `
+          <li class="info-item">
+            <div>
+              <div class="name">${esc(p.name)}</div>
+              <div class="role">${esc(p.role)}</div>
+            </div>
+            ${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener">Länk →</a>` : ''}
+          </li>
+        `).join('');
+      } catch (e) {}
+    }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    load();
+    setInterval(load, 10000);
+  </script>
+</body>
+</html>

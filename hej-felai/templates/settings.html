@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inställningar</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Inställningar</h1>
+    </div>
+
+    <div class="setting-group">
+      <label>Eventtitel</label>
+      <input type="text" id="event_title" value="{{ settings.event_title }}">
+    </div>
+
+    <div class="setting-group">
+      <label>Bakgrundsfärg</label>
+      <input type="color" id="bg_color" value="{{ settings.bg_color }}">
+    </div>
+
+    <div class="setting-group">
+      <label>Bakgrundsbild (URL)</label>
+      <input type="text" id="bg_image" value="{{ settings.bg_image }}" placeholder="https://...">
+    </div>
+
+    <button class="btn" onclick="save()">Spara</button>
+
+    <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border);">
+      <h3 style="color: var(--muted); margin-bottom: 12px;">Farligt område</h3>
+      <button class="btn btn-danger" onclick="resetAll()">Rensa all data</button>
+    </div>
+
+    <div id="status" style="text-align:center;margin-top:16px;color:var(--muted);font-size:0.9em;"></div>
+  </div>
+  <script>
+    const slug = "{{ slug }}";
+
+    async function save() {
+      const data = {
+        event_title: document.getElementById('event_title').value,
+        bg_color: document.getElementById('bg_color').value,
+        bg_image: document.getElementById('bg_image').value.trim()
+      };
+      const resp = await fetch('/api/settings/' + slug, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (resp.ok) {
+        document.getElementById('status').textContent = 'Sparat!';
+        setTimeout(() => document.getElementById('status').textContent = '', 2000);
+      }
+    }
+
+    async function resetAll() {
+      if (!confirm('Rensa ALLA deltagare och foton? Kan inte ångras.')) return;
+      const resp = await fetch('/api/reset/' + slug, { method: 'POST' });
+      if (resp.ok) {
+        document.getElementById('status').textContent = 'All data rensad.';
+      }
+    }
+  </script>
+</body>
+</html>
