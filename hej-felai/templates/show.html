@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ settings.event_title }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: {{ settings.bg_color }};
+      {% if settings.bg_image %}
+      background-image: url('{{ settings.bg_image }}');
+      background-size: cover;
+      background-position: center;
+      {% endif %}
+    }
+    .event-title {
+      position: fixed; top: 28px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.25);
+      font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+      z-index: 10; pointer-events: none;
+    }
+    .counter {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.18);
+      font-size: 12px; z-index: 10; pointer-events: none;
+    }
+    .container { width: 100vw; height: 100vh; position: relative; }
+    .bubble {
+      position: absolute;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default; will-change: left, top;
+    }
+    .bubble .photo {
+      border-radius: 50%;
+      background-size: cover; background-position: center;
+      border: 3px solid rgba(255,255,255,0.12);
+      transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 15px rgba(91, 141, 239, 0.08);
+    }
+    .bubble.featured .photo {
+      border-color: rgba(91, 141, 239, 0.5);
+      box-shadow: 0 0 40px rgba(91, 141, 239, 0.25), 0 0 80px rgba(91, 141, 239, 0.08);
+    }
+    .bubble .info {
+      text-align: center; margin-top: 8px;
+      opacity: 0; transform: translateY(4px);
+      transition: opacity 1.2s ease, transform 1.2s ease;
+      white-space: nowrap; pointer-events: none;
+    }
+    .bubble.featured .info { opacity: 1; transform: translateY(0); }
+    .bubble .info .name { color: #e8e8f0; font-weight: 600; font-size: 14px; }
+    .bubble .info .role { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 2px; }
+    .bubble.featured .info .name { font-size: 18px; }
+    .bubble.featured .info .role { font-size: 13px; }
+    .empty-msg {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.3); font-size: 1.2em; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="event-title" id="event-title">{{ settings.event_title }}</div>
+  <div class="container" id="container">
+    <div class="empty-msg" id="empty-msg">Väntar på deltagare...</div>
+  </div>
+  <div class="counter" id="counter"></div>
+  <script src="/static/show.js"></script>
+</body>
+</html>
