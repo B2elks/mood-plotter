@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ settings.event_title }} — Check in</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>👋 {{ settings.event_title }}</h1>
+      <p>Checka in dig så syns du på skärmen!</p>
+    </div>
+
+    <form id="checkin-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Foto</label>
+        <div class="photo-area">
+          <div class="photo-preview" id="photo-preview" onclick="document.getElementById('photo-input').click()">
+            <span class="placeholder">Tryck för att ta eller välja bild</span>
+          </div>
+          <input type="file" id="photo-input" name="photo" class="photo-input"
+                 accept="image/jpeg,image/png,image/webp" capture="environment">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Namn</label>
+        <input type="text" name="name" id="name" placeholder="Ditt namn" required
+               value="{{ prefill.get('name', '') }}">
+      </div>
+
+      <div class="form-group">
+        <label>Sysselsättning / Företag</label>
+        <input type="text" name="role" id="role" placeholder="Vad gör du / vilket företag?" required
+               value="{{ prefill.get('role', '') }}">
+      </div>
+
+      <div class="form-group">
+        <label>Länk (valfritt)</label>
+        <input type="url" name="link" id="link" placeholder="LinkedIn, hemsida..."
+               value="{{ prefill.get('link', '') }}">
+      </div>
+
+      {% if kiosk %}
+      <input type="hidden" name="kiosk" value="1">
+      {% endif %}
+
+      <button type="submit" class="btn" id="submit-btn">Checka in!</button>
+    </form>
+
+    <div class="success-msg" id="success-msg">
+      <h2>✅ Tack <span id="success-name"></span>!</h2>
+      <p>Du syns nu på skärmen.</p>
+    </div>
+  </div>
+
+  <script>
+    const photoInput = document.getElementById('photo-input');
+    const preview = document.getElementById('photo-preview');
+    const form = document.getElementById('checkin-form');
+    const successMsg = document.getElementById('success-msg');
+    const submitBtn = document.getElementById('submit-btn');
+    const isKiosk = {{ 'true' if kiosk else 'false' }};
+
+    photoInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+        };
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Skickar...';
+
+      const formData = new FormData(form);
+
+      try {
+        const resp = await fetch('/api/checkin', { method: 'POST', body: formData });
+        const data = await resp.json();
+
+        if (data.ok) {
+          document.getElementById('success-name').textContent = data.name;
+          form.style.display = 'none';
+          successMsg.style.display = 'block';
+
+          if (isKiosk) {
+            setTimeout(function() {
+              form.reset();
+              preview.innerHTML = '<span class="placeholder">Tryck för att ta eller välja bild</span>';
+              form.style.display = 'block';
+              successMsg.style.display = 'none';
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Checka in!';
+            }, 3000);
+          }
+        } else {
+          alert(data.error || 'Något gick fel');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Checka in!';
+        }
+      } catch (err) {
+        alert('Kunde inte ansluta. Försök igen.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Checka in!';
+      }
+    });
+  </script>
+</body>
+</html>
