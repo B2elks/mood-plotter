@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifiera — felai.se</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>SMS-verifiering</h1>
+    <p class="subtitle">Verifiera att du är <strong>{{ verification.name }}</strong></p>
+
+    <div id="pending-content">
+      <div class="qr-box">
+        <img src="/api/qr?text={{ sms_uri | urlencode }}" alt="QR-kod">
+      </div>
+
+      <div class="manual">
+        <div class="label">Skicka detta SMS</div>
+        <div class="code">{{ verification.code }}</div>
+        <div class="phone">till {{ phone_display }}</div>
+      </div>
+    </div>
+
+    <div class="status-box" id="status-box">
+      <span class="spinner" id="spinner"></span>
+      <span id="status-text">Väntar på SMS...</span>
+    </div>
+  </div>
+
+  <script>
+    var vid = "{{ vid }}";
+    var done = false;
+
+    function poll() {
+      if (done) return;
+      fetch('/api/verify/' + vid)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var box = document.getElementById('status-box');
+          var text = document.getElementById('status-text');
+          var spinner = document.getElementById('spinner');
+          var content = document.getElementById('pending-content');
+
+          if (data.status === 'verified') {
+            done = true;
+            box.className = 'status-box status-verified';
+            spinner.style.display = 'none';
+            text.textContent = 'Verifierad!';
+          } else if (data.status === 'expired') {
+            done = true;
+            box.className = 'status-box status-expired';
+            spinner.style.display = 'none';
+            text.textContent = 'Verifieringen har gått ut';
+            content.style.display = 'none';
+          }
+        })
+        .catch(function() {});
+    }
+
+    {% if verification.status == 'verified' %}
+      document.getElementById('status-box').className = 'status-box status-verified';
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('status-text').textContent = 'Redan verifierad';
+      document.getElementById('pending-content').style.display = 'none';
+      done = true;
+    {% elif verification.status == 'expired' %}
+      document.getElementById('status-box').className = 'status-box status-expired';
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('status-text').textContent = 'Verifieringen har gått ut';
+      document.getElementById('pending-content').style.display = 'none';
+      done = true;
+    {% else %}
+      setInterval(poll, 2000);
+    {% endif %}
+  </script>
+</body>
+</html>
