@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}felai.se{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/site.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="site-nav-inner">
+      <a href="/" class="nav-logo">felai<span>.se</span></a>
+      <ul class="nav-links">
+        <li><a href="/docs">Dokumentation</a></li>
+        <li><a href="/demo">Testa</a></li>
+        <li><a href="/account" class="btn-nav-cta">Konto</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">felai<span>.se</span></div>
+          <div class="footer-tagline">SMS-verifiering för utvecklare</div>
+        </div>
+        <div>
+          <div class="footer-heading">Produkt</div>
+          <ul class="footer-links">
+            <li><a href="/docs">Dokumentation</a></li>
+            <li><a href="/demo">Testa live</a></li>
+            <li><a href="/account">Konto &amp; API-nyckel</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">API</div>
+          <ul class="footer-links">
+            <li><a href="/docs#verify">POST /api/verify</a></li>
+            <li><a href="/docs#status">GET /api/verify/{id}</a></li>
+            <li><a href="/docs#lookup">GET /api/lookup/{phone}</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Drivs av</div>
+          <ul class="footer-links">
+            <li><a href="https://46elks.se" target="_blank" rel="noopener">46elks SMS</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; {{ 2026 }} felai.se — SMS-verifiering som faktiskt fungerar
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

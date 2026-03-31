@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Dokumentation — felai.se{% endblock %}
+
+{% block content %}
+<div class="container-wide">
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Komma igang</div>
+      <ul>
+        <li><a href="#intro">Introduktion</a></li>
+        <li><a href="#auth">Autentisering</a></li>
+        <li><a href="#base-url">Bas-URL</a></li>
+      </ul>
+      <div class="sidebar-heading">Endpoint</div>
+      <ul>
+        <li><a href="#verify">POST /api/verify</a></li>
+        <li><a href="#status">GET /api/verify/{id}</a></li>
+        <li><a href="#webhook">POST /sms/incoming</a></li>
+        <li><a href="#lookup">GET /api/lookup/{phone}</a></li>
+      </ul>
+      <div class="sidebar-heading">Exempel</div>
+      <ul>
+        <li><a href="#example-curl">cURL</a></li>
+        <li><a href="#example-python">Python</a></li>
+      </ul>
+    </aside>
+
+    <!-- Content -->
+    <main class="docs-content">
+
+      <h1 style="margin-bottom:8px;">Dokumentation</h1>
+      <p style="color:var(--muted); margin-bottom: 40px;">SMS-verifierings-API for felai.se</p>
+
+      <!-- Intro -->
+      <h2 id="intro">Introduktion</h2>
+      <p>
+        felai.se tillhandahaller ett enkelt REST-API for att verifiera anvandares telefonnummer
+        via SMS. Flodet ar:
+      </p>
+      <ol style="padding-left: 1.5em; margin-bottom: 1rem;">
+        <li>Du skapar en verifiering med ett POST-anrop.</li>
+        <li>Du visar den returnerade <code>verify_url</code> (eller QR-koden) for anvandaren.</li>
+        <li>Anvandaren skickar SMS-koden till det angivna numret.</li>
+        <li>Verifieringen markas som <code>verified</code> och du far telefonnumret.</li>
+      </ol>
+      <p>
+        Verifierade nummer cachas i 90 dagar. Du kan sla upp ett nummer igen med
+        <code>GET /api/lookup/{phone}</code> utan att skicka nytt SMS.
+      </p>
+
+      <!-- Auth -->
+      <h2 id="auth">Autentisering</h2>
+      <p>
+        Alla API-anrop (utom webhook) kräver autentisering via en Bearer-token
+        i <code>Authorization</code>-headern:
+      </p>
+      <pre><code>Authorization: Bearer DIN_API_NYCKEL</code></pre>
+      <p>
+        Hitta din API-nyckel pa <a href="/account">kontosidan</a>.
+        Anrop utan giltig token returnerar <code>401 Unauthorized</code>.
+      </p>
+
+      <!-- Base URL -->
+      <h2 id="base-url">Bas-URL</h2>
+      <pre><code>https://felai.se</code></pre>
+      <p>Alla endpoint-sökvägar nedan ar relativa till denna bas-URL.</p>
+
+      <!-- POST /api/verify -->
+      <h2 id="verify">POST /api/verify</h2>
+      <p>Skapar en ny verifieringsbegaran.</p>
+
+      <div class="endpoint-header">
+        <span class="method method-post">POST</span>
+        <span class="endpoint-path">/api/verify</span>
+      </div>
+
+      <h3>Parametrar (JSON body)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Typ</th>
+              <th>Kravs</th>
+              <th>Beskrivning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>name</code></td>
+              <td>string</td>
+              <td><span class="required-badge">Kravs</span></td>
+              <td>Anvandarnamnett att koppla till verifieringen. Visas pa verifieringssidan.</td>
+            </tr>
+            <tr>
+              <td><code>phone</code></td>
+              <td>string</td>
+              <td><span class="optional-badge">Valfri</span></td>
+              <td>
+                Forväntat telefonnummer (t.ex. <code>+46701234567</code>).
+                Om utelämnat tas numret fran inkommande SMS.
+                Stöder format <code>07XXXXXXXX</code> (konverteras till <code>+46</code>).
+              </td>
+            </tr>
+            <tr>
+              <td><code>callback_url</code></td>
+              <td>string</td>
+              <td><span class="optional-badge">Valfri</span></td>
+              <td>URL som kallas med POST-anrop (JSON) nar verifieringen lyckas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>cURL-exempel</h3>
+      <div class="code-header">
+        <span>Skapa verifiering</span>
+        <span>cURL</span>
+      </div>
+      <pre><code>curl -X POST https://felai.se/api/verify \
+  -H "Authorization: Bearer DIN_API_NYCKEL" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Anna Svensson",
+    "phone": "+46701234567",
+    "callback_url": "https://din-app.se/webhook/verified"
+  }'</code></pre>
+
+      <h3>Svar — 200 OK</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Falt</th><th>Typ</th><th>Beskrivning</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td><td>string</td>
+              <td>Unikt verifierings-ID (16 hex-tecken).</td>
+            </tr>
+            <tr>
+              <td><code>status</code></td><td>string</td>
+              <td>Alltid <code>"pending"</code> vid skapandet.</td>
+            </tr>
+            <tr>
+              <td><code>verify_url</code></td><td>string</td>
+              <td>URL att visa for anvandaren (eller generera QR-kod fran).</td>
+            </tr>
+            <tr>
+              <td><code>code</code></td><td>string</td>
+              <td>SMS-koden som anvandaren ska skicka.</td>
+            </tr>
+            <tr>
+              <td><code>sms_number</code></td><td>string</td>
+              <td>Telefonnumret SMS:et ska skickas till.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-header">
+        <span>Exempelsvar</span>
+        <span>JSON</span>
+      </div>
+      <pre><code>{
+  "id": "a3f8c2d1e4b59f02",
+  "status": "pending",
+  "verify_url": "https://felai.se/verify/a3f8c2d1e4b59f02",
+  "code": "KXMP4",
+  "sms_number": "+46700123456"
+}</code></pre>
+
+      <!-- GET /api/verify/:id -->
+      <h2 id="status">GET /api/verify/{id}</h2>
+      <p>Hamtar aktuell status for en verifiering.</p>
+
+      <div class="endpoint-header">
+        <span class="method method-get">GET</span>
+        <span class="endpoint-path">/api/verify/{id}</span>
+      </div>
+
+      <h3>cURL-exempel</h3>
+      <div class="code-header">
+        <span>Hamta status</span>
+        <span>cURL</span>
+      </div>
+      <pre><code>curl https://felai.se/api/verify/a3f8c2d1e4b59f02 \
+  -H "Authorization: Bearer DIN_API_NYCKEL"</code></pre>
+
+      <h3>Svarsfalt</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Falt</th><th>Typ</th><th>Beskrivning</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td><td>string</td>
+              <td>Verifierings-ID.</td>
+            </tr>
+            <tr>
+              <td><code>status</code></td><td>string</td>
+              <td>
+                <code>"pending"</code> — vantar pa SMS<br>
+                <code>"verified"</code> — verifieringen lyckades<br>
+                <code>"expired"</code> — koden gick ut (10 minuter)
+              </td>
+            </tr>
+            <tr>
+              <td><code>name</code></td><td>string</td>
+              <td>Anvandarnamnett som angavs vid skapandet.</td>
+            </tr>
+            <tr>
+              <td><code>phone</code></td><td>string</td>
+              <td>Verifierat telefonnummer (tomt om ej verifierat).</td>
+            </tr>
+            <tr>
+              <td><code>verified_at</code></td><td>string / null</td>
+              <td>Tidsstampel nar verifieringen skedde (ISO 8601), eller <code>null</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="notice">
+        <strong>Polling:</strong> Det rekommenderas att polla var 2:a sekund under maximalt
+        15 minuter. Koden galler i 10 minuter; darefter returneras <code>"expired"</code>.
+      </div>
+
+      <!-- POST /sms/incoming -->
+      <h2 id="webhook">POST /sms/incoming</h2>
+      <p>
+        Denna endpoint kallas av <strong>46elks</strong> nar ett inkommande SMS tas emot
+        pa verifieringsnumret. Du behoever inte anropa denna endpoint sjalv.
+      </p>
+
+      <div class="endpoint-header">
+        <span class="method method-post">POST</span>
+        <span class="endpoint-path">/sms/incoming</span>
+      </div>
+
+      <p>
+        46elks skickar form-kodad data (<code>application/x-www-form-urlencoded</code>).
+        felai.se matchar koden mot pågående verifieringar och uppdaterar statusen.
+      </p>
+
+      <h3>Parametrar fran 46elks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Parameter</th><th>Typ</th><th>Beskrivning</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>from</code></td><td>string</td>
+              <td>Avsandarens telefonnummer (t.ex. <code>+46701234567</code>).</td>
+            </tr>
+            <tr>
+              <td><code>message</code></td><td>string</td>
+              <td>SMS-texten — ska matcha den aktiva koden.</td>
+            </tr>
+            <tr>
+              <td><code>to</code></td><td>string</td>
+              <td>Verifieringsnumrets nummer.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- GET /api/lookup -->
+      <h2 id="lookup">GET /api/lookup/{phone}</h2>
+      <p>
+        Slar upp ett telefonnummer i cachen av verifierade nummer.
+        Returnerar namn och verifieringstidpunkt om numret ar cachat (inom 90 dagar).
+      </p>
+
+      <div class="endpoint-header">
+        <span class="method method-get">GET</span>
+        <span class="endpoint-path">/api/lookup/{phone}</span>
+      </div>
+
+      <div class="notice">
+        Telefonnumret i URL:en kodas automatiskt (t.ex. <code>%2B46701234567</code>).
+        Du kan ocksa anvanda format <code>07XXXXXXXX</code> — det konverteras till <code>+46</code>.
+      </div>
+
+      <h3>cURL-exempel</h3>
+      <div class="code-header">
+        <span>Sla upp telefonnummer</span>
+        <span>cURL</span>
+      </div>
+      <pre><code>curl "https://felai.se/api/lookup/%2B46701234567" \
+  -H "Authorization: Bearer DIN_API_NYCKEL"</code></pre>
+
+      <h3>Svarsfalt</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Falt</th><th>Typ</th><th>Beskrivning</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>phone</code></td><td>string</td>
+              <td>Telefonnumret i E.164-format.</td>
+            </tr>
+            <tr>
+              <td><code>name</code></td><td>string</td>
+              <td>Senast anvanda anvandarnamnett for detta nummer.</td>
+            </tr>
+            <tr>
+              <td><code>verified_at</code></td><td>string</td>
+              <td>Tidsstampel nar verifieringen gjordes.</td>
+            </tr>
+            <tr>
+              <td><code>expires_at</code></td><td>string</td>
+              <td>Nar cache-posten upphör att galla (90 dagar efter verifiering).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-header">
+        <span>Exempelsvar</span>
+        <span>JSON</span>
+      </div>
+      <pre><code>{
+  "phone": "+46701234567",
+  "name": "Anna Svensson",
+  "verified_at": "2026-03-15 14:22:05",
+  "expires_at": "2026-06-13 14:22:05"
+}</code></pre>
+
+      <!-- Full examples -->
+      <h2 id="example-curl">Komplett cURL-exempel</h2>
+      <div class="code-header">
+        <span>Skapa och polla verifiering</span>
+        <span>cURL</span>
+      </div>
+      <pre><code># 1. Skapa verifiering
+RESPONSE=$(curl -s -X POST https://felai.se/api/verify \
+  -H "Authorization: Bearer DIN_API_NYCKEL" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Anna Svensson"}')
+
+ID=$(echo $RESPONSE | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+echo "Verifierings-ID: $ID"
+
+# 2. Polla status
+curl -s "https://felai.se/api/verify/$ID" \
+  -H "Authorization: Bearer DIN_API_NYCKEL"</code></pre>
+
+      <h2 id="example-python">Komplett Python-exempel</h2>
+      <div class="code-header">
+        <span>Flask-integration</span>
+        <span>Python</span>
+      </div>
+      <pre><code>import requests
+import time
+
+API_KEY = "DIN_API_NYCKEL"
+BASE    = "https://felai.se"
+HEADERS = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type":  "application/json",
+}
+
+# Skapa en verifiering
+resp = requests.post(f"{BASE}/api/verify",
+    headers=HEADERS,
+    json={"name": "Anna Svensson", "phone": "+46701234567"})
+data = resp.json()
+
+print(f"Visa denna URL: {data['verify_url']}")
+vid = data["id"]
+
+# Polla tills verifierad eller utgangen
+for _ in range(150):   # max 5 min
+    time.sleep(2)
+    status = requests.get(f"{BASE}/api/verify/{vid}", headers=HEADERS).json()
+    if status["status"] == "verified":
+        print(f"Verifierad! Telefon: {status['phone']}")
+        break
+    elif status["status"] == "expired":
+        print("Verifieringen gick ut.")
+        break
+else:
+    print("Timeout — ingen verifiering mottagen.")</code></pre>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Konto — felai.se{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+
+    <h1 style="margin-bottom: 8px;">Konto</h1>
+    <p style="color: var(--muted); margin-bottom: 48px;">Hantera din API-nyckel och se anvandningsstatistik.</p>
+
+    <!-- API key -->
+    <div style="margin-bottom: 48px;">
+      <h2 style="margin-bottom: 12px;">Din API-nyckel</h2>
+      <p style="color: var(--muted);">
+        Anvand denna nyckel i <code>Authorization</code>-headern for alla API-anrop.
+      </p>
+      <div class="secret-box">{{ verify_secret }}</div>
+      <div class="notice">
+        <strong>Demo-lage:</strong> Det finns inga individuella konton an. Alla anvandare delar
+        samma API-nyckel. Kontosystemet kommer i en framtida version.
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="margin-bottom: 48px;">
+      <h2 style="margin-bottom: 12px;">Anvandningsstatistik</h2>
+      <p style="color: var(--muted); margin-bottom: 24px;">Totalt antal verifieringar i systemet.</p>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-label">Totalt skapade</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ stats.verified }}</div>
+          <div class="stat-label">Slutforda</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ stats.cached }}</div>
+          <div class="stat-label">Cachade nummer</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick reference -->
+    <div>
+      <h2 style="margin-bottom: 16px;">Snabbreferens</h2>
+      <div class="code-header">
+        <span>Skapa verifiering</span>
+        <span>cURL</span>
+      </div>
+      <pre><code>curl -X POST https://felai.se/api/verify \
+  -H "Authorization: Bearer {{ verify_secret }}" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Anna Svensson"}'</code></pre>
+
+      <p>
+        Las <a href="/docs">dokumentationen</a> for fler exempel och en komplett
+        API-referens.
+      </p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

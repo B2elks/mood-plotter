@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}felai.se — SMS-verifiering for utvecklare{% endblock %}
+
+{% block content %}
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <p class="section-label">SMS-verifiering</p>
+      <h1>Verifiera dina anvandare<br>med ett SMS</h1>
+      <p class="hero-lead">
+        En enkel API-forfragning. En QR-kod. Anvandaren skickar ett SMS — och ar verifierad.
+        Inga appar. Inga loften. Fungerar pa alla telefoner.
+      </p>
+      <div class="hero-actions">
+        <a href="/docs" class="btn btn-primary">Kom igang</a>
+        <a href="/demo" class="btn btn-outline">Testa live</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code example -->
+  <section class="section section-alt">
+    <div class="container">
+      <p class="section-label">Sa enkelt ar det</p>
+      <h2 class="section-title">En forfragning racker</h2>
+      <p class="section-lead">
+        Skicka ett POST-anrop med din anvandares namn. Fa tillbaka en URL och en QR-kod
+        som anvandaren skannar for att verifiera sig.
+      </p>
+
+      <div class="code-header">
+        <span>Skapa en verifiering</span>
+        <span>cURL</span>
+      </div>
+      <pre><code>curl -X POST https://felai.se/api/verify \
+  -H "Authorization: Bearer DIN_API_NYCKEL" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Anna Svensson"}'</code></pre>
+
+      <div class="code-header">
+        <span>Svar</span>
+        <span>JSON</span>
+      </div>
+      <pre><code>{
+  "id": "a3f8c2d1e4b5",
+  "status": "pending",
+  "verify_url": "https://felai.se/verify/a3f8c2d1e4b5",
+  "code": "KXMP4",
+  "sms_number": "+46700123456"
+}</code></pre>
+
+      <p>
+        Visa <code>verify_url</code> for din anvandare — eller generera en QR-kod fran den.
+        Nar anvandaren skickar SMS-koden uppdateras statusen till <code>"verified"</code>.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="container-wide">
+      <div style="text-align:center; max-width: 540px; margin: 0 auto 48px;">
+        <p class="section-label">Fordelar</p>
+        <h2 class="section-title">Byggt for att vara enkelt</h2>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Inga appar</h3>
+          <p>Anvandaren behoever ingen app, inget konto, inget nedladdning. Bara en telefon med SMS.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>En API-forfragning</h3>
+          <p>Skapa en verifiering med ett enda POST-anrop. Polling eller webhook nar det ar klart.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🗄️</div>
+          <h3>90 dagars cache</h3>
+          <p>Verifierade nummer sparas i 90 dagar. Sla upp direkt nasta gang utan nytt SMS.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Bearer-autentisering</h3>
+          <p>Enkel och saker autentisering via Authorization-header. Ingen komplicerad OAuth.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔔</div>
+          <h3>Webhook-stod</h3>
+          <p>Ange en callback_url sa kallar vi din endpoint direkt nar verifieringen ar klar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🇸🇪</div>
+          <h3>Svensk infrastruktur</h3>
+          <p>Driven av 46elks svenska SMS-nater. Stabil leverans till alla svenska operatorer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section section-alt">
+    <div class="container">
+      <div style="text-align:center; margin-bottom: 48px;">
+        <p class="section-label">Sa fungerar det</p>
+        <h2 class="section-title">Fyra enkla steg</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>API-anrop</h3>
+          <p>Du skickar ett POST-anrop med anvandarnamnett till <code>/api/verify</code>.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>QR-kod</h3>
+          <p>Du visar den returnerade URL:en eller QR-koden for anvandaren.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>SMS</h3>
+          <p>Anvandaren skannar koden och skickar ett SMS med den unika koden.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Verifierad</h3>
+          <p>Status uppdateras till <code>"verified"</code> och du far telefonnumret.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="container" style="text-align:center;">
+      <h2 style="margin-bottom:16px;">Redo att borja?</h2>
+      <p style="color: var(--muted); margin-bottom: 32px; font-size: 1.1rem;">
+        Las dokumentationen och skicka ditt forsta API-anrop pa fem minuter.
+      </p>
+      <div class="hero-actions">
+        <a href="/docs" class="btn btn-primary">Las dokumentationen</a>
+        <a href="/demo" class="btn btn-outline">Testa utan kod</a>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}

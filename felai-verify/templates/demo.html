@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Testa — felai.se{% endblock %}
+
+{% block head %}
+<style>
+  .demo-section {
+    padding: 64px 0 80px;
+  }
+  .demo-card {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(17, 12, 69, 0.07);
+  }
+  .demo-card h2 {
+    margin-bottom: 8px;
+  }
+  .demo-subtitle {
+    color: var(--muted);
+    margin-bottom: 32px;
+    font-size: 0.95rem;
+  }
+  .qr-wrap {
+    background: var(--light-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: inline-block;
+    margin-bottom: 24px;
+  }
+  .qr-wrap img {
+    width: 220px;
+    height: 220px;
+    display: block;
+  }
+  .sms-direct {
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+    transition: background 0.15s;
+  }
+  .sms-direct:hover {
+    background: var(--primary-hover);
+    color: var(--white);
+    text-decoration: none;
+  }
+  .manual-box {
+    background: var(--light-bg);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .manual-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .manual-code {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    color: var(--primary);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    line-height: 1.2;
+  }
+  .manual-phone {
+    font-size: 1rem;
+    margin-top: 6px;
+    color: var(--body);
+  }
+  .status-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .demo-new-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    padding: 10px 22px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .demo-new-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .loading-msg {
+    color: var(--muted);
+    font-size: 1rem;
+    padding: 40px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="demo-section">
+  <div class="container">
+
+    <div style="text-align:center; margin-bottom: 40px;">
+      <p class="section-label">Live-demo</p>
+      <h1>Testa verifieringen</h1>
+      <p class="hero-lead">
+        Scanna QR-koden nedan med din telefon eller tryck pa knappen for att
+        skicka SMS direkt. Ingen registrering kravs.
+      </p>
+    </div>
+
+    <div class="demo-card">
+
+      <div id="loading" class="loading-msg">
+        <span class="spinner"></span> Genererar verifiering...
+      </div>
+
+      <div id="result" style="display:none;">
+        <h2>Verifiera dig</h2>
+        <p class="demo-subtitle">Scanna QR-koden eller tryck pa knappen nedan</p>
+
+        <div class="qr-wrap">
+          <img id="r-qr" src="" alt="QR-kod">
+        </div>
+
+        <div>
+          <a id="sms-link" class="sms-direct" href="">Skicka SMS direkt</a>
+        </div>
+
+        <div class="manual-box">
+          <div class="manual-label">Eller skicka manuellt</div>
+          <div class="manual-code" id="r-code"></div>
+          <div class="manual-phone">till <span id="r-number"></span></div>
+        </div>
+
+        <div class="status-row">
+          <span class="spinner" id="r-spinner"></span>
+          <span class="badge badge-blue" id="r-status">Vantar pa SMS...</span>
+        </div>
+
+        <button class="demo-new-btn" onclick="location.reload()">Ny verifiering</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  var pollInterval = null;
+
+  function init() {
+    fetch('/api/verify', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer {{ secret }}',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: 'Demo' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        document.getElementById('loading').textContent = 'Fel: ' + data.error;
+        return;
+      }
+
+      var smsUri = 'sms:' + data.sms_number + '?body=' + data.code;
+      document.getElementById('r-qr').src = '/api/qr?text=' + encodeURIComponent(smsUri);
+      document.getElementById('r-code').textContent = data.code;
+      document.getElementById('r-number').textContent = data.sms_number;
+      document.getElementById('sms-link').href = smsUri;
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('result').style.display = 'block';
+
+      pollInterval = setInterval(function() { pollStatus(data.id); }, 2000);
+    })
+    .catch(function(e) {
+      document.getElementById('loading').textContent = 'Kunde inte ansluta till API.';
+    });
+  }
+
+  function pollStatus(id) {
+    fetch('/api/verify/' + id)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var badge = document.getElementById('r-status');
+        var spinner = document.getElementById('r-spinner');
+        if (data.status === 'verified') {
+          badge.textContent = 'Verifierad!';
+          badge.className = 'badge badge-green';
+          spinner.style.display = 'none';
+          clearInterval(pollInterval);
+        } else if (data.status === 'expired') {
+          badge.textContent = 'Utgangen';
+          badge.className = 'badge badge-red';
+          spinner.style.display = 'none';
+          clearInterval(pollInterval);
+        }
+      })
+      .catch(function() {});
+  }
+
+  init();
+</script>
+{% endblock %}

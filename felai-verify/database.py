@@ -65,13 +65,19 @@ def find_pending_by_code(code):
     return dict(row) if row else None
 
 
-def mark_verified(vid):
+def mark_verified(vid, phone=None):
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     conn = get_db()
-    conn.execute(
-        "UPDATE verifications SET status = 'verified', verified_at = ? WHERE id = ?",
-        (now, vid),
-    )
+    if phone:
+        conn.execute(
+            "UPDATE verifications SET status = 'verified', verified_at = ?, phone = ? WHERE id = ?",
+            (now, phone, vid),
+        )
+    else:
+        conn.execute(
+            "UPDATE verifications SET status = 'verified', verified_at = ? WHERE id = ?",
+            (now, vid),
+        )
     conn.commit()
     conn.close()
     return now
@@ -98,3 +104,14 @@ def lookup_number(phone):
     ).fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def get_stats():
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) FROM verifications").fetchone()[0]
+    verified = conn.execute(
+        "SELECT COUNT(*) FROM verifications WHERE status = 'verified'"
+    ).fetchone()[0]
+    cached = conn.execute("SELECT COUNT(*) FROM known_numbers").fetchone()[0]
+    conn.close()
+    return {"total": total, "verified": verified, "cached": cached}

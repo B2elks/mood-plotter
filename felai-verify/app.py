@@ -17,6 +17,7 @@ from config import (
 from database import (
     init_db, create_verification, get_verification,
     find_pending_by_code, mark_verified, upsert_known_number, lookup_number,
+    get_stats,
 )
 
 app = Flask(__name__)
@@ -68,10 +69,10 @@ def api_create_verify():
     phone = data.get("phone", "").strip()
     callback_url = data.get("callback_url", "").strip()
 
-    if not name or not phone:
-        return jsonify({"error": "name and phone required"}), 400
+    if not name:
+        return jsonify({"error": "name required"}), 400
 
-    phone = normalize_phone(phone)
+    phone = normalize_phone(phone) if phone else ""
     vid = uuid.uuid4().hex[:16]
     code = generate_code()
 
@@ -122,16 +123,18 @@ def sms_incoming():
         logger.info(f"No matching verification for code '{code}' from {sender}")
         return "", 200
 
-    verified_at = mark_verified(v["id"])
-    upsert_known_number(v["phone"], v["name"])
-    logger.info(f"Verified {v['name']} ({v['phone']}) with code {code}")
+    # Use sender's number if phone wasn't provided at creation
+    phone = v["phone"] or sender
+    verified_at = mark_verified(v["id"], phone)
+    upsert_known_number(phone, v["name"])
+    logger.info(f"Verified {v['name']} ({phone}) with code {code}")
 
     if v["callback_url"]:
         callback_data = {
             "id": v["id"],
             "status": "verified",
             "name": v["name"],
-            "phone": v["phone"],
+            "phone": phone,
             "verified_at": verified_at,
         }
         Thread(target=send_callback, args=(v["callback_url"], callback_data), daemon=True).start()
@@ -188,9 +191,25 @@ def verify_page(vid):
     )
 
 
+@app.route("/demo")
+def demo():
+    return render_template("demo.html", secret=VERIFY_SECRET)
+
+
+@app.route("/docs")
+def docs():
+    return render_template("docs.html")
+
+
+@app.route("/account")
+def account():
+    stats = get_stats()
+    return render_template("account.html", verify_secret=VERIFY_SECRET, stats=stats)
+
+
 @app.route("/")
 def index():
-    return jsonify({"service": "felai.se SMS Verify", "status": "ok"})
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
