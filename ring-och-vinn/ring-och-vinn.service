@@ -1,0 +1,16 @@
+[Unit]
+Description=Ring & Vinn Game Show
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/ring-och-vinn
+Environment=PATH=/var/www/ring-och-vinn/venv/bin
+EnvironmentFile=/var/www/ring-och-vinn/.env
+ExecStart=/var/www/ring-och-vinn/venv/bin/python server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
