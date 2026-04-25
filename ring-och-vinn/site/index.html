@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ring & Vinn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo">📺 RING & VINN</div>
+    <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+  </div>
+
+  <div class="main">
+    <div class="character-panel" id="character-panel">
+      <svg id="host" viewBox="0 0 200 280" class="host-svg">
+        <rect x="50" y="140" width="100" height="100" rx="20" fill="#ff8800"/>
+        <polygon points="80,140 100,180 50,240" fill="#e07000" opacity="0.5"/>
+        <polygon points="120,140 100,180 150,240" fill="#e07000" opacity="0.5"/>
+        <circle cx="100" cy="90" r="50" fill="#ffcc66"/>
+        <g id="eyes">
+          <ellipse cx="80" cy="82" rx="8" ry="10" fill="#333"/>
+          <ellipse cx="120" cy="82" rx="8" ry="10" fill="#333"/>
+          <circle cx="83" cy="79" r="3" fill="white" opacity="0.7"/>
+          <circle cx="123" cy="79" r="3" fill="white" opacity="0.7"/>
+        </g>
+        <g id="eyebrows">
+          <line x1="68" y1="68" x2="90" y2="70" stroke="#8B6914" stroke-width="4" stroke-linecap="round"/>
+          <line x1="110" y1="70" x2="132" y2="68" stroke="#8B6914" stroke-width="4" stroke-linecap="round"/>
+        </g>
+        <g id="mouth">
+          <path d="M75 105 Q100 125 125 105" stroke="#333" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </g>
+        <polygon points="85,142 100,150 115,142 100,158" fill="#ff4444"/>
+        <g id="mic" transform="translate(145,100)">
+          <rect x="0" y="0" width="10" height="30" rx="5" fill="#666"/>
+          <circle cx="5" cy="-2" r="8" fill="#888"/>
+          <circle cx="5" cy="-2" r="5" fill="#999"/>
+        </g>
+        <g id="left-arm">
+          <path d="M50,160 Q20,180 30,220" stroke="#ff8800" stroke-width="16" fill="none" stroke-linecap="round"/>
+        </g>
+        <g id="right-arm">
+          <path d="M150,160 Q180,180 170,220" stroke="#ff8800" stroke-width="16" fill="none" stroke-linecap="round"/>
+        </g>
+      </svg>
+      <div class="host-name">PROGRAMLEDAREN</div>
+    </div>
+
+    <div class="question-panel">
+      <div class="question-box" id="question-box">
+        <div class="question-num" id="question-num">VÄNTAR PÅ START</div>
+        <div class="question-text" id="question-text">Ring numret nedan för att vara med!</div>
+      </div>
+      <div class="caller-area">
+        <div class="caller-status" id="queue-info">📞 0 i kö</div>
+        <div class="caller-status caller-active" id="caller-info" style="display:none;">🎤 <span id="caller-name"></span></div>
+      </div>
+      <div class="answer-area" id="answer-area" style="display:none;">
+        <div class="answer-label">SVAR:</div>
+        <div class="answer-text" id="answer-text"></div>
+      </div>
+      <div class="result-area" id="result-area" style="display:none;">
+        <div class="result-icon" id="result-icon"></div>
+        <div class="result-text" id="result-text"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker">
+    <div class="phone-number" id="phone-number">📞 Ring: XXX-XXX XX XX</div>
+    <div class="leaderboard" id="leaderboard">⭐ Väntar på deltagare...</div>
+  </div>
+
+  <canvas id="confetti" style="position:fixed;inset:0;pointer-events:none;z-index:100;"></canvas>
+
+  <script src="show.js"></script>
+</body>
+</html>
