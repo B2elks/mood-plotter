@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "type": "quiz",
+    "question": "Hur många invånare har Hudiksvall?",
+    "answer": "15000",
+    "accept": ["15000", "femtontusen", "15 000", "ca 15000", "cirka 15000"],
+    "points": 1
+  },
+  {
+    "id": 2,
+    "type": "quiz",
+    "question": "Vilket år grundades 46elks?",
+    "answer": "2014",
+    "accept": ["2014", "tvåtusenfjorton"],
+    "points": 1
+  },
+  {
+    "id": 3,
+    "type": "price",
+    "question": "Vad kostar en liter mjölk på ICA?",
+    "answer": "15",
+    "accept_range": [12, 20],
+    "points": 1
+  },
+  {
+    "id": 4,
+    "type": "quiz",
+    "question": "Vad heter Sveriges längsta flod?",
+    "answer": "Klarälven",
+    "accept": ["Klarälven", "klarälven", "Göta älv", "Göta älv Klarälven"],
+    "points": 1
+  },
+  {
+    "id": 5,
+    "type": "quiz",
+    "question": "Vilken svensk stad kallas 'Nordens Venedig'?",
+    "answer": "Stockholm",
+    "accept": ["Stockholm", "stockholm"],
+    "points": 1
+  },
+  {
+    "id": 6,
+    "type": "open",
+    "question": "Nämn ett svenskt varumärke som alla känner till!",
+    "answer": "Any well-known Swedish brand like IKEA, Volvo, H&M, Spotify, Ericsson, etc.",
+    "points": 2
+  },
+  {
+    "id": 7,
+    "type": "price",
+    "question": "Vad kostar en Big Mac på McDonalds i Sverige?",
+    "answer": "69",
+    "accept_range": [55, 85],
+    "points": 1
+  },
+  {
+    "id": 8,
+    "type": "quiz",
+    "question": "Hur många landskap finns det i Sverige?",
+    "answer": "25",
+    "accept": ["25", "tjugofem"],
+    "points": 1
+  },
+  {
+    "id": 9,
+    "type": "quiz",
+    "question": "Vad heter landskapet där Hudiksvall ligger?",
+    "answer": "Hälsingland",
+    "accept": ["Hälsingland", "hälsingland"],
+    "points": 1
+  },
+  {
+    "id": 10,
+    "type": "open",
+    "question": "Vad är det bästa med Hudiksvall?",
+    "answer": "Any positive answer about Hudiksvall is correct.",
+    "points": 2
+  }
+]
