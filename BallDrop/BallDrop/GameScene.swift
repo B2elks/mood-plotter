@@ -146,6 +146,50 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spawnScoreZone()
     }
 
+    func didBegin(_ contact: SKPhysicsContact) {
+        let bodyA = contact.bodyA
+        let bodyB = contact.bodyB
+
+        let ballBody: SKPhysicsBody?
+        let zoneBody: SKPhysicsBody?
+
+        if bodyA.categoryBitMask == PhysicsCategory.ball && bodyB.categoryBitMask == PhysicsCategory.scoreZone {
+            ballBody = bodyA
+            zoneBody = bodyB
+        } else if bodyA.categoryBitMask == PhysicsCategory.scoreZone && bodyB.categoryBitMask == PhysicsCategory.ball {
+            ballBody = bodyB
+            zoneBody = bodyA
+        } else {
+            return
+        }
+
+        guard let ballNode = ballBody?.node, let zoneNode = zoneBody?.node else { return }
+
+        let flash = SKAction.sequence([
+            SKAction.group([
+                SKAction.scale(to: 1.6, duration: 0.15),
+                SKAction.fadeOut(withDuration: 0.15),
+            ]),
+            SKAction.removeFromParent(),
+        ])
+        ballNode.physicsBody = nil
+        ballNode.run(flash)
+
+        let zoneFlash = SKAction.sequence([
+            SKAction.group([
+                SKAction.scale(to: 1.4, duration: 0.12),
+                SKAction.fadeOut(withDuration: 0.12),
+            ]),
+            SKAction.removeFromParent(),
+        ])
+        zoneNode.physicsBody = nil
+        zoneNode.run(zoneFlash)
+
+        scoreZone = nil
+        score += 1
+        spawnScoreZone()
+    }
+
     override func mouseDown(with event: NSEvent) {
         let location = event.location(in: self)
 
