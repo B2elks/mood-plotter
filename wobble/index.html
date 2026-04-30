@@ -121,24 +121,32 @@
 
   window.addEventListener('mouseup', () => { activeStroke = null; });
 
-  function drawStroke(obj) {
+  const WOBBLE_SPEED = 1.5;       // rad/sec
+  const WOBBLE_AMP = 2;           // px for stroke points
+
+  function drawStroke(obj, t) {
     if (obj.points.length < 2) return;
     ctx.strokeStyle = obj.color;
     ctx.lineWidth = obj.width;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(obj.points[0].x, obj.points[0].y);
-    for (let i = 1; i < obj.points.length; i++) {
-      ctx.lineTo(obj.points[i].x, obj.points[i].y);
+    for (let i = 0; i < obj.points.length; i++) {
+      const p = obj.points[i];
+      const ph = obj.phase + i * 0.15;
+      const dx = Math.sin(t * WOBBLE_SPEED + ph) * WOBBLE_AMP;
+      const dy = Math.cos(t * WOBBLE_SPEED * 1.3 + ph) * WOBBLE_AMP;
+      if (i === 0) ctx.moveTo(p.x + dx, p.y + dy);
+      else ctx.lineTo(p.x + dx, p.y + dy);
     }
     ctx.stroke();
   }
 
   function render() {
+    const t = performance.now() / 1000;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const obj of objects) {
-      if (obj.type === 'pen') drawStroke(obj);
+      if (obj.type === 'pen') drawStroke(obj, t);
     }
     requestAnimationFrame(render);
   }
