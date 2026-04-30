@@ -5,6 +5,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var spawnRate: TimeInterval = 1.5
     var isPaused_: Bool = false
     var drawMode: Bool = false
+    private var freeDrawTool: FreeDrawTool?
     private var lastSpawnTime: TimeInterval = 0
     private let maxBalls = 100
     var draggedNode: SKNode?
@@ -29,6 +30,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         rightWall.physicsBody?.isDynamic = false
         rightWall.physicsBody?.friction = 0.2
         addChild(rightWall)
+
+        freeDrawTool = FreeDrawTool(scene: self)
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -95,8 +98,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     override func mouseDown(with event: NSEvent) {
         let location = event.location(in: self)
-        let node = atPoint(location)
 
+        if drawMode {
+            freeDrawTool?.beginDraw(at: location)
+            return
+        }
+
+        let node = atPoint(location)
         if node.name == "block" || node.parent?.name == "block" {
             let block = node.name == "block" ? node : node.parent!
             draggedNode = block
@@ -104,11 +112,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func mouseDragged(with event: NSEvent) {
+        let location = event.location(in: self)
+
+        if drawMode {
+            freeDrawTool?.continueDraw(at: location)
+            return
+        }
+
         guard let node = draggedNode else { return }
-        node.position = event.location(in: self)
+        node.position = location
     }
 
     override func mouseUp(with event: NSEvent) {
+        if drawMode {
+            if let block = freeDrawTool?.endDraw() {
+                addChild(block)
+            }
+            return
+        }
         draggedNode = nil
     }
 
