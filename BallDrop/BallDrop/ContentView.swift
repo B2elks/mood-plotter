@@ -13,14 +13,18 @@ struct ContentView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            VStack {
-                Text("Tools")
-                    .font(.headline)
-                    .padding()
-                Spacer()
-            }
-            .frame(width: 200)
-            .background(Color.white)
+            SidebarView(
+                selectedTool: $selectedTool,
+                spawnRate: $spawnRate,
+                isPaused: $isPaused,
+                onPlaceBlock: { type in
+                    gameScene.addBlock(type: type,
+                        at: CGPoint(x: gameScene.size.width / 2, y: gameScene.size.height / 2))
+                },
+                onClearBlocks: {
+                    gameScene.clearAllBlocks()
+                }
+            )
 
             SpriteView(scene: gameScene, options: [.allowsTransparency])
                 .background(
@@ -39,6 +43,9 @@ struct ContentView: View {
         }
         .onChange(of: isPaused) { _, newValue in
             gameScene.isPaused_ = newValue
+        }
+        .onChange(of: selectedTool) { _, newValue in
+            gameScene.drawMode = newValue == "draw"
         }
     }
 }
