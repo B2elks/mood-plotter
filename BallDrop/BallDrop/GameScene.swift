@@ -16,6 +16,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private let maxBalls = 100
     var draggedNode: SKNode?
     private var spawnPointNode: SpawnPoint!
+    var score: Int = 0 {
+        didSet { onScoreChanged?(score) }
+    }
+    var onScoreChanged: ((Int) -> Void)?
+    private var scoreZone: ScoreZone?
 
     override func didMove(to view: SKView) {
         backgroundColor = .clear
@@ -43,6 +48,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(spawnPointNode)
 
         freeDrawTool = FreeDrawTool(scene: self)
+        spawnScoreZone()
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -107,6 +113,37 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func clearAllBlocks() {
         children.filter { $0.name == "block" }.forEach { $0.removeFromParent() }
+    }
+
+    func spawnScoreZone() {
+        let edges: [ScoreZone.Edge] = [.bottom, .left, .right]
+        let edge = edges.randomElement()!
+        let zone = ScoreZone(edge: edge)
+
+        let margin = ScoreZone.zoneLength / 2 + 10
+        let halfThick = ScoreZone.zoneThickness / 2
+
+        switch edge {
+        case .bottom:
+            let x = CGFloat.random(in: margin...(size.width - margin))
+            zone.position = CGPoint(x: x, y: halfThick)
+        case .left:
+            let y = CGFloat.random(in: margin...(size.height - margin))
+            zone.position = CGPoint(x: halfThick, y: y)
+        case .right:
+            let y = CGFloat.random(in: margin...(size.height - margin))
+            zone.position = CGPoint(x: size.width - halfThick, y: y)
+        }
+
+        scoreZone = zone
+        addChild(zone)
+    }
+
+    func resetScore() {
+        score = 0
+        scoreZone?.removeFromParent()
+        scoreZone = nil
+        spawnScoreZone()
     }
 
     override func mouseDown(with event: NSEvent) {
