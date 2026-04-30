@@ -83,8 +83,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(ball)
     }
 
-    func addBlock(type: String, at position: CGPoint) {
-        // Placeholder — Task 3 will implement BlockNode
+    func addBlock(type: BlockType, at position: CGPoint) {
+        let block = BlockNode(type: type)
+        block.position = position
+        addChild(block)
     }
 
     func clearAllBlocks() {

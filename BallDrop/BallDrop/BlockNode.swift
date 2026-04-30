@@ -1,0 +1,72 @@
+import SpriteKit
+
+enum BlockType: String, CaseIterable {
+    case horizontalRect
+    case verticalRect
+    case diagonal
+    case circle
+    case triangle
+}
+
+class BlockNode: SKShapeNode {
+
+    let blockType: BlockType
+
+    init(type: BlockType) {
+        self.blockType = type
+        super.init()
+
+        name = "block"
+        fillColor = .white
+        strokeColor = NSColor(white: 0.85, alpha: 1)
+        lineWidth = 1
+        alpha = 0.9
+
+        switch type {
+        case .horizontalRect:
+            let size = CGSize(width: 100, height: 12)
+            path = CGPath(roundedRect: CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2),
+                                               size: size),
+                          cornerWidth: 4, cornerHeight: 4, transform: nil)
+            physicsBody = SKPhysicsBody(rectangleOf: size)
+
+        case .verticalRect:
+            let size = CGSize(width: 12, height: 100)
+            path = CGPath(roundedRect: CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2),
+                                               size: size),
+                          cornerWidth: 4, cornerHeight: 4, transform: nil)
+            physicsBody = SKPhysicsBody(rectangleOf: size)
+
+        case .diagonal:
+            let size = CGSize(width: 100, height: 12)
+            path = CGPath(roundedRect: CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2),
+                                               size: size),
+                          cornerWidth: 4, cornerHeight: 4, transform: nil)
+            physicsBody = SKPhysicsBody(rectangleOf: size)
+            zRotation = -.pi / 6
+
+        case .circle:
+            let radius: CGFloat = 20
+            path = CGPath(ellipseIn: CGRect(x: -radius, y: -radius, width: radius*2, height: radius*2), transform: nil)
+            physicsBody = SKPhysicsBody(circleOfRadius: radius)
+
+        case .triangle:
+            let size: CGFloat = 40
+            let triPath = CGMutablePath()
+            triPath.move(to: CGPoint(x: 0, y: size/2))
+            triPath.addLine(to: CGPoint(x: -size/2, y: -size/2))
+            triPath.addLine(to: CGPoint(x: size/2, y: -size/2))
+            triPath.closeSubpath()
+            path = triPath
+            physicsBody = SKPhysicsBody(polygonFrom: triPath)
+        }
+
+        physicsBody?.isDynamic = false
+        physicsBody?.friction = 0.3
+        physicsBody?.restitution = 0.5
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) not implemented")
+    }
+}
