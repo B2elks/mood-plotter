@@ -107,6 +107,15 @@
         phase: Math.random() * Math.PI * 2,
       };
       objects.push(activeStroke);
+    } else {
+      objects.push({
+        type: state.tool,
+        x: p.x,
+        y: p.y,
+        size: 60,
+        color: state.color,
+        phase: Math.random() * Math.PI * 2,
+      });
     }
   });
 
@@ -123,6 +132,10 @@
 
   const WOBBLE_SPEED = 1.5;       // rad/sec
   const WOBBLE_AMP = 2;           // px for stroke points
+
+  const SHAPE_SCALE_AMP = 0.05;   // ±5% size
+  const SHAPE_TRANSLATE_AMP = 2;  // px
+  const SHAPE_ROTATE_AMP = 0.05;  // rad (~3°)
 
   function drawStroke(obj, t) {
     if (obj.points.length < 2) return;
@@ -142,11 +155,43 @@
     ctx.stroke();
   }
 
+  function drawShape(obj, t) {
+    const ph = obj.phase;
+    const scale = 1 + Math.sin(t * WOBBLE_SPEED + ph) * SHAPE_SCALE_AMP;
+    const dx = Math.sin(t * WOBBLE_SPEED * 0.9 + ph) * SHAPE_TRANSLATE_AMP;
+    const dy = Math.cos(t * WOBBLE_SPEED * 1.1 + ph) * SHAPE_TRANSLATE_AMP;
+    const rot = Math.sin(t * WOBBLE_SPEED * 0.8 + ph) * SHAPE_ROTATE_AMP;
+
+    const s = obj.size * scale;
+    ctx.save();
+    ctx.translate(obj.x + dx, obj.y + dy);
+    ctx.rotate(rot);
+    ctx.fillStyle = obj.color;
+
+    if (obj.type === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, s, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (obj.type === 'square') {
+      ctx.fillRect(-s, -s, s * 2, s * 2);
+    } else if (obj.type === 'triangle') {
+      ctx.beginPath();
+      ctx.moveTo(0, -s);
+      ctx.lineTo(s * 0.866, s * 0.5);
+      ctx.lineTo(-s * 0.866, s * 0.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
   function render() {
     const t = performance.now() / 1000;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const obj of objects) {
       if (obj.type === 'pen') drawStroke(obj, t);
+      else drawShape(obj, t);
     }
     requestAnimationFrame(render);
   }
