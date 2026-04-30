@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wobble</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #1a1a1a; }
+  body { display: flex; font-family: system-ui, sans-serif; }
+
+  #toolbar {
+    width: 64px;
+    background: #2a2a2a;
+    border-right: 1px solid #444;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 8px;
+  }
+
+  .tool-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: #3a3a3a;
+    color: #eee;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tool-btn:hover { background: #4a4a4a; }
+  .tool-btn.active { border-color: #6cf; background: #2a4a5a; }
+
+  #color { width: 44px; height: 44px; border: none; border-radius: 8px; cursor: pointer; background: none; }
+  #width { width: 44px; }
+  .spacer { flex: 1; }
+
+  #canvas { flex: 1; display: block; cursor: crosshair; background: #111; }
+</style>
+</head>
+<body>
+  <div id="toolbar">
+    <button class="tool-btn active" data-tool="pen" title="Penna">✏</button>
+    <button class="tool-btn" data-tool="circle" title="Cirkel">○</button>
+    <button class="tool-btn" data-tool="square" title="Kvadrat">□</button>
+    <button class="tool-btn" data-tool="triangle" title="Triangel">△</button>
+    <input type="range" id="width" min="1" max="20" value="3" title="Linjebredd">
+    <input type="color" id="color" value="#66ccff" title="Färg">
+    <div class="spacer"></div>
+    <button class="tool-btn" id="clear" title="Rensa allt">🗑</button>
+  </div>
+  <canvas id="canvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+</script>
+</body>
+</html>
