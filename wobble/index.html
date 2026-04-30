@@ -65,6 +65,28 @@
   }
   window.addEventListener('resize', resize);
   resize();
+
+  const state = {
+    tool: 'pen',
+    color: document.getElementById('color').value,
+    width: parseInt(document.getElementById('width').value, 10),
+  };
+
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.tool = btn.dataset.tool;
+    });
+  });
+
+  document.getElementById('color').addEventListener('input', e => {
+    state.color = e.target.value;
+  });
+
+  document.getElementById('width').addEventListener('input', e => {
+    state.width = parseInt(e.target.value, 10);
+  });
 </script>
 </body>
 </html>
