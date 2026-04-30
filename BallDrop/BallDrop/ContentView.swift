@@ -68,7 +68,9 @@ struct ContentView: View {
         }
         .onAppear {
             gameScene.onScoreChanged = { newScore in
-                score = newScore
+                Task { @MainActor in
+                    score = newScore
+                }
             }
         }
     }
