@@ -87,6 +87,62 @@
   document.getElementById('width').addEventListener('input', e => {
     state.width = parseInt(e.target.value, 10);
   });
+
+  const objects = [];
+  let activeStroke = null;
+
+  function canvasPos(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  canvas.addEventListener('mousedown', e => {
+    const p = canvasPos(e);
+    if (state.tool === 'pen') {
+      activeStroke = {
+        type: 'pen',
+        points: [p],
+        color: state.color,
+        width: state.width,
+        phase: Math.random() * Math.PI * 2,
+      };
+      objects.push(activeStroke);
+    }
+  });
+
+  canvas.addEventListener('mousemove', e => {
+    if (!activeStroke) return;
+    const p = canvasPos(e);
+    const last = activeStroke.points[activeStroke.points.length - 1];
+    if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
+      activeStroke.points.push(p);
+    }
+  });
+
+  window.addEventListener('mouseup', () => { activeStroke = null; });
+
+  function drawStroke(obj) {
+    if (obj.points.length < 2) return;
+    ctx.strokeStyle = obj.color;
+    ctx.lineWidth = obj.width;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(obj.points[0].x, obj.points[0].y);
+    for (let i = 1; i < obj.points.length; i++) {
+      ctx.lineTo(obj.points[i].x, obj.points[i].y);
+    }
+    ctx.stroke();
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const obj of objects) {
+      if (obj.type === 'pen') drawStroke(obj);
+    }
+    requestAnimationFrame(render);
+  }
+  render();
 </script>
 </body>
 </html>
