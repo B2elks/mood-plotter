@@ -196,6 +196,10 @@
     requestAnimationFrame(render);
   }
   render();
+
+  document.getElementById('clear').addEventListener('click', () => {
+    objects.length = 0;
+  });
 </script>
 </body>
 </html>
