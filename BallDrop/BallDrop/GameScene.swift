@@ -9,6 +9,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastSpawnTime: TimeInterval = 0
     private let maxBalls = 100
     var draggedNode: SKNode?
+    private var spawnPointNode: SpawnPoint!
 
     override func didMove(to view: SKView) {
         backgroundColor = .clear
@@ -30,6 +31,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         rightWall.physicsBody?.isDynamic = false
         rightWall.physicsBody?.friction = 0.2
         addChild(rightWall)
+
+        spawnPointNode = SpawnPoint()
+        spawnPointNode.position = CGPoint(x: size.width / 2, y: size.height - 30)
+        addChild(spawnPointNode)
 
         freeDrawTool = FreeDrawTool(scene: self)
     }
@@ -71,7 +76,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.fillColor = colors.randomElement()!
         ball.strokeColor = .white
         ball.lineWidth = 2
-        ball.position = CGPoint(x: size.width / 2, y: size.height - 30)
+        ball.position = spawnPointNode.position
 
         ball.physicsBody = SKPhysicsBody(circleOfRadius: radius)
         ball.physicsBody?.restitution = 0.7
@@ -99,12 +104,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func mouseDown(with event: NSEvent) {
         let location = event.location(in: self)
 
+        let node = atPoint(location)
+        if node.name == "spawnPoint" || node.parent?.name == "spawnPoint" {
+            draggedNode = spawnPointNode
+            return
+        }
+
         if drawMode {
             freeDrawTool?.beginDraw(at: location)
             return
         }
 
-        let node = atPoint(location)
         if node.name == "block" || node.parent?.name == "block" {
             let block = node.name == "block" ? node : node.parent!
             draggedNode = block
