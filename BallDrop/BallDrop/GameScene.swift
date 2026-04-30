@@ -164,6 +164,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         guard let ballNode = ballBody?.node, let zoneNode = zoneBody?.node else { return }
+        guard let currentZone = scoreZone, zoneNode === currentZone else { return }
+        scoreZone = nil
 
         let flash = SKAction.sequence([
             SKAction.group([
@@ -185,7 +187,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         zoneNode.physicsBody = nil
         zoneNode.run(zoneFlash)
 
-        scoreZone = nil
         score += 1
         spawnScoreZone()
     }
