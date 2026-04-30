@@ -3,9 +3,12 @@ import SwiftUI
 struct SidebarView: View {
     @Binding var selectedTool: String
     @Binding var spawnRate: Double
+    @Binding var ballRadius: Double
     @Binding var isPaused: Bool
+    @Binding var score: Int
     var onPlaceBlock: (BlockType) -> Void
     var onClearBlocks: () -> Void
+    var onResetScore: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -68,6 +71,27 @@ struct SidebarView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 8) {
+                Text("POÄNG")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal)
+
+                Text("\(score)")
+                    .font(.system(size: 24, weight: .bold))
+                    .padding(.horizontal)
+
+                Button(action: onResetScore) {
+                    Label("Nollställ poäng", systemImage: "arrow.counterclockwise")
+                        .font(.system(size: 12))
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.small)
+                .padding(.horizontal)
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
                 Text("KONTROLL")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.secondary)
@@ -77,6 +101,13 @@ struct SidebarView: View {
                     Text("Hastighet")
                         .font(.system(size: 12))
                     Slider(value: $spawnRate, in: 0.2...5.0, step: 0.1)
+                }
+                .padding(.horizontal)
+
+                HStack {
+                    Text("Storlek")
+                        .font(.system(size: 12))
+                    Slider(value: $ballRadius, in: 4...30, step: 1)
                 }
                 .padding(.horizontal)
 
