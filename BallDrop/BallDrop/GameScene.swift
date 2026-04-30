@@ -1,8 +1,14 @@
 import SpriteKit
 
+enum PhysicsCategory {
+    static let ball: UInt32       = 1 << 0
+    static let scoreZone: UInt32  = 1 << 1
+}
+
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var spawnRate: TimeInterval = 1.5
+    var ballRadius: CGFloat = 8
     var isPaused_: Bool = false
     var drawMode: Bool = false
     private var freeDrawTool: FreeDrawTool?
@@ -62,7 +68,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
 
-        let radius: CGFloat = 8
+        let radius: CGFloat = ballRadius
         let colors: [NSColor] = [
             NSColor(red: 1.0, green: 0.42, blue: 0.54, alpha: 1),
             NSColor(red: 1.0, green: 0.70, blue: 0.28, alpha: 1),
@@ -84,6 +90,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody?.linearDamping = 0.1
         ball.physicsBody?.angularDamping = 0.1
         ball.physicsBody?.mass = 0.1
+        ball.physicsBody?.categoryBitMask = PhysicsCategory.ball
+        ball.physicsBody?.contactTestBitMask = PhysicsCategory.scoreZone
 
         let dx = CGFloat.random(in: -0.3...0.3)
         ball.physicsBody?.applyImpulse(CGVector(dx: dx, dy: 0))
