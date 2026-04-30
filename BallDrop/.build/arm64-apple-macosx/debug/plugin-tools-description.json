@@ -1,0 +1,282 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.BallDrop-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/sources",
+      "importPath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/BallDropApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "BallDrop",
+      "moduleOutputPath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/Modules/BallDrop.swiftmodule",
+      "objects" : [
+        "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/BallDropApp.swift.o",
+        "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/ContentView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "BallDrop_main",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "balldrop"
+      ],
+      "outputFileMapPath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/BallDropApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/Modules/BallDrop.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/BallDropApp.swift",
+        "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/ContentView.swift"
+      ],
+      "tempsPath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "BallDrop" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BallDrop",
+      "-package-name",
+      "balldrop",
+      "-c",
+      "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/BallDropApp.swift",
+      "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/ContentView.swift",
+      "-I",
+      "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "BallDrop_main",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "balldrop",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "BallDrop" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop-entitlement.plist" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<entitlement-plist>"
+        },
+        {
+          "kind" : "virtual",
+          "name" : "<com.apple.security.get-task-allow>"
+        }
+      ],
+      "outputFilePath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop-entitlement.plist"
+    },
+    "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/BallDropApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/BallDrop/ContentView.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/sources"
+    },
+    "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/BallDropApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.build/ContentView.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/BallDrop.product/Objects.LinkFileList"
+    },
+    "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/b2/Documents/Proj/LLM/BallDrop/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}
