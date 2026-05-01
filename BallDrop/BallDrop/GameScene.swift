@@ -35,8 +35,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
         physicsWorld.contactDelegate = self
 
+        spawnPointNode = SpawnPoint()
+        addChild(spawnPointNode)
+
+        freeDrawTool = FreeDrawTool(scene: self)
+
+        rebuildLayout()
+    }
+
+    override func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
+        rebuildLayout()
+    }
+
+    private func rebuildLayout() {
+        guard size.width > 0, size.height > 0 else { return }
+
+        children.filter { $0.name == "wall" }.forEach { $0.removeFromParent() }
+
         let wallThickness: CGFloat = 1
         let leftWall = SKNode()
+        leftWall.name = "wall"
         leftWall.position = CGPoint(x: 0, y: size.height / 2)
         leftWall.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: wallThickness, height: size.height))
         leftWall.physicsBody?.isDynamic = false
@@ -44,18 +63,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(leftWall)
 
         let rightWall = SKNode()
+        rightWall.name = "wall"
         rightWall.position = CGPoint(x: size.width, y: size.height / 2)
         rightWall.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: wallThickness, height: size.height))
         rightWall.physicsBody?.isDynamic = false
         rightWall.physicsBody?.friction = 0.2
         addChild(rightWall)
 
-        spawnPointNode = SpawnPoint()
-        spawnPointNode.position = CGPoint(x: size.width / 2, y: size.height - 30)
-        addChild(spawnPointNode)
+        spawnPointNode?.position = CGPoint(x: size.width / 2, y: size.height - 30)
 
-        freeDrawTool = FreeDrawTool(scene: self)
-        spawnScoreZone()
+        if scoreZone == nil {
+            spawnScoreZone()
+        }
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -123,11 +142,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func spawnScoreZone() {
+        let margin = ScoreZone.zoneLength / 2 + 10
+        guard size.width > margin * 2, size.height > margin * 2 else { return }
+
         let edges: [ScoreZone.Edge] = [.bottom, .left, .right]
         let edge = edges.randomElement()!
         let zone = ScoreZone(edge: edge)
 
-        let margin = ScoreZone.zoneLength / 2 + 10
         let halfThick = ScoreZone.zoneThickness / 2
 
         switch edge {
