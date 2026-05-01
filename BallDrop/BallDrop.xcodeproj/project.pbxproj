@@ -1,0 +1,435 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0343D21F5BDBB2AC4DE44A0B /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */; };
+		07F8E3685EC4ADB2212C63E7 /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493AC4887126BC1B32964193 /* BlockNode.swift */; };
+		0CA0F207389DA289FBB6E446 /* BallDropApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E59C7076708EF40A0764AB /* BallDropApp.swift */; };
+		0F256FE0975B14ED76D1A50C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF68C57DE3882B17E759E5D3 /* ContentView.swift */; };
+		183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */; };
+		3890B129561D54A2A45C12A8 /* SpriteKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F861223A753B23358D80ED57 /* SpriteKitView.swift */; };
+		4C84A90EB0C8EC28C68B3BEF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99A0BA57667C7FF0951603FF /* Assets.xcassets */; };
+		6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */; };
+		77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
+		8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
+		9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
+		B094E88C6504E68C951B8802 /* SpawnPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */; };
+		CB4FF4BD661C6D65EBCB5E1A /* SpawnPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */; };
+		CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */; };
+		DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
+		E9D3B563B8A6D230C0C9B68D /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493AC4887126BC1B32964193 /* BlockNode.swift */; };
+		EBCA732ED60E4155625132A1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF68C57DE3882B17E759E5D3 /* ContentView.swift */; };
+		FCEB1485B585CCBCBD111A2F /* BallDropApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E59C7076708EF40A0764AB /* BallDropApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0A94ED2363F019BE3BBE2F12 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
+		2262D7C35661953201D6BFAB /* BallDrop-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "BallDrop-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreZone.swift; sourceTree = "<group>"; };
+		308EBCD25BB912BC7E86D419 /* BallDrop-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BallDrop-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		493AC4887126BC1B32964193 /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
+		99A0BA57667C7FF0951603FF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9B70F311CB9E21263D1FEA46 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpawnPoint.swift; sourceTree = "<group>"; };
+		D7E59C7076708EF40A0764AB /* BallDropApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDropApp.swift; sourceTree = "<group>"; };
+		EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeDrawTool.swift; sourceTree = "<group>"; };
+		F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		F861223A753B23358D80ED57 /* SpriteKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpriteKitView.swift; sourceTree = "<group>"; };
+		FF68C57DE3882B17E759E5D3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		59C741A8CB6A28D8B1FA2087 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2262D7C35661953201D6BFAB /* BallDrop-iOS.app */,
+				308EBCD25BB912BC7E86D419 /* BallDrop-Mac.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8EE2AFEFD2B77B451FC7EAC5 = {
+			isa = PBXGroup;
+			children = (
+				E1D7DC9F30F480C46FC5B7E0 /* BallDrop */,
+				59C741A8CB6A28D8B1FA2087 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E1D7DC9F30F480C46FC5B7E0 /* BallDrop */ = {
+			isa = PBXGroup;
+			children = (
+				D7E59C7076708EF40A0764AB /* BallDropApp.swift */,
+				493AC4887126BC1B32964193 /* BlockNode.swift */,
+				FF68C57DE3882B17E759E5D3 /* ContentView.swift */,
+				EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */,
+				0A94ED2363F019BE3BBE2F12 /* GameScene.swift */,
+				30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */,
+				F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */,
+				BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */,
+				F409F225D3ABC670FFC85CC1 /* iOS */,
+			);
+			path = BallDrop;
+			sourceTree = "<group>";
+		};
+		F409F225D3ABC670FFC85CC1 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				99A0BA57667C7FF0951603FF /* Assets.xcassets */,
+				9B70F311CB9E21263D1FEA46 /* Info.plist */,
+				F861223A753B23358D80ED57 /* SpriteKitView.swift */,
+			);
+			path = iOS;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0A91B9B5800C7F0A009550E5 /* BallDrop-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D92FC17FE412BAD9EEC1C6CE /* Build configuration list for PBXNativeTarget "BallDrop-iOS" */;
+			buildPhases = (
+				D20050F45054044B4A23DCC5 /* Sources */,
+				FB8AECF08EE0218F8CCD4ECD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "BallDrop-iOS";
+			packageProductDependencies = (
+			);
+			productName = "BallDrop-iOS";
+			productReference = 2262D7C35661953201D6BFAB /* BallDrop-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BC062BF7DD32490F4C67B4DA /* BallDrop-Mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ACA6F5BCC3205AC2CA31B741 /* Build configuration list for PBXNativeTarget "BallDrop-Mac" */;
+			buildPhases = (
+				6AE84184F97539F60F9930B3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "BallDrop-Mac";
+			packageProductDependencies = (
+			);
+			productName = "BallDrop-Mac";
+			productReference = 308EBCD25BB912BC7E86D419 /* BallDrop-Mac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1F954A1AA5999CF795A65B8B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 286A74188DD859EFDFB422A8 /* Build configuration list for PBXProject "BallDrop" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 8EE2AFEFD2B77B451FC7EAC5;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 59C741A8CB6A28D8B1FA2087 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BC062BF7DD32490F4C67B4DA /* BallDrop-Mac */,
+				0A91B9B5800C7F0A009550E5 /* BallDrop-iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FB8AECF08EE0218F8CCD4ECD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C84A90EB0C8EC28C68B3BEF /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6AE84184F97539F60F9930B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0CA0F207389DA289FBB6E446 /* BallDropApp.swift in Sources */,
+				E9D3B563B8A6D230C0C9B68D /* BlockNode.swift in Sources */,
+				0F256FE0975B14ED76D1A50C /* ContentView.swift in Sources */,
+				6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */,
+				DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */,
+				8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */,
+				0343D21F5BDBB2AC4DE44A0B /* SidebarView.swift in Sources */,
+				B094E88C6504E68C951B8802 /* SpawnPoint.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D20050F45054044B4A23DCC5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FCEB1485B585CCBCBD111A2F /* BallDropApp.swift in Sources */,
+				07F8E3685EC4ADB2212C63E7 /* BlockNode.swift in Sources */,
+				EBCA732ED60E4155625132A1 /* ContentView.swift in Sources */,
+				183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */,
+				77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */,
+				9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */,
+				CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */,
+				CB4FF4BD661C6D65EBCB5E1A /* SpawnPoint.swift in Sources */,
+				3890B129561D54A2A45C12A8 /* SpriteKitView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		389F0C9B462F125853F2B17F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BallDrop/iOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.b2.balldrop;
+				PRODUCT_NAME = BallDrop;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+		38F63CB163FCA4609A358412 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BallDrop/iOS/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.b2.balldrop.mac;
+				PRODUCT_NAME = BallDrop;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		3A9CCDDB6E31F96FEBBF79A0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		3F0889ED019D11266FDD7B22 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		BC7A2AA88BECBB557CF42AFD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BallDrop/iOS/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.b2.balldrop.mac;
+				PRODUCT_NAME = BallDrop;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		F53390CAC473DEE7C66B9CBC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = BallDrop/iOS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.b2.balldrop;
+				PRODUCT_NAME = BallDrop;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		286A74188DD859EFDFB422A8 /* Build configuration list for PBXProject "BallDrop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F0889ED019D11266FDD7B22 /* Debug */,
+				3A9CCDDB6E31F96FEBBF79A0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		ACA6F5BCC3205AC2CA31B741 /* Build configuration list for PBXNativeTarget "BallDrop-Mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				38F63CB163FCA4609A358412 /* Debug */,
+				BC7A2AA88BECBB557CF42AFD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D92FC17FE412BAD9EEC1C6CE /* Build configuration list for PBXNativeTarget "BallDrop-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F53390CAC473DEE7C66B9CBC /* Debug */,
+				389F0C9B462F125853F2B17F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1F954A1AA5999CF795A65B8B /* Project object */;
+}

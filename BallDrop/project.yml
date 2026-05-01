@@ -1,0 +1,45 @@
+name: BallDrop
+options:
+  bundleIdPrefix: com.b2
+  deploymentTarget:
+    macOS: "14.0"
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  BallDrop-Mac:
+    type: application
+    platform: macOS
+    sources:
+      - path: BallDrop
+        excludes:
+          - "iOS/**"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.b2.balldrop.mac
+        PRODUCT_NAME: BallDrop
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.games
+        ENABLE_HARDENED_RUNTIME: YES
+
+  BallDrop-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: BallDrop
+        excludes:
+          - "iOS/LaunchScreen.storyboard"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.b2.balldrop
+        PRODUCT_NAME: BallDrop
+        INFOPLIST_FILE: BallDrop/iOS/Info.plist
+        TARGETED_DEVICE_FAMILY: "2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
