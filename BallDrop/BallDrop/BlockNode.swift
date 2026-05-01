@@ -6,6 +6,7 @@ enum BlockType: String, CaseIterable {
     case diagonal
     case circle
     case triangle
+    case trampoline
 }
 
 class BlockNode: SKShapeNode {
@@ -59,11 +60,40 @@ class BlockNode: SKShapeNode {
             triPath.closeSubpath()
             path = triPath
             physicsBody = SKPhysicsBody(polygonFrom: triPath)
+
+        case .trampoline:
+            let size = CGSize(width: 100, height: 12)
+            path = CGPath(roundedRect: CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2),
+                                               size: size),
+                          cornerWidth: 4, cornerHeight: 4, transform: nil)
+            physicsBody = SKPhysicsBody(rectangleOf: size)
+            fillColor = NSColor(red: 0.40, green: 0.78, blue: 0.45, alpha: 1)
+
+            let zigzag = SKShapeNode()
+            let zPath = CGMutablePath()
+            let segmentWidth: CGFloat = 10
+            let zigzagHeight: CGFloat = 3
+            var x: CGFloat = -size.width/2 + 5
+            zPath.move(to: CGPoint(x: x, y: 0))
+            var up = true
+            while x < size.width/2 - 5 {
+                x += segmentWidth
+                zPath.addLine(to: CGPoint(x: x, y: up ? zigzagHeight : -zigzagHeight))
+                up.toggle()
+            }
+            zigzag.path = zPath
+            zigzag.strokeColor = NSColor.white.withAlphaComponent(0.85)
+            zigzag.lineWidth = 1.5
+            addChild(zigzag)
         }
 
         physicsBody?.isDynamic = false
         physicsBody?.friction = 0.3
         physicsBody?.restitution = 0.5
+
+        if type == .trampoline {
+            physicsBody?.restitution = 1.4
+        }
     }
 
     required init?(coder: NSCoder) {
