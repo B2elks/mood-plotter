@@ -36,6 +36,7 @@ struct ContentView: View {
             ZStack(alignment: .topTrailing) {
                 #if os(iOS)
                 SpriteKitView(scene: gameScene)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(
                         LinearGradient(
                             colors: [
