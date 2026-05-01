@@ -28,8 +28,8 @@ class ScoreZone: SKShapeNode {
         let rect = CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2), size: size)
         path = CGPath(roundedRect: rect, cornerWidth: 3, cornerHeight: 3, transform: nil)
 
-        fillColor = NSColor(red: 1.0, green: 0.75, blue: 0.20, alpha: 0.85)
-        strokeColor = NSColor(red: 1.0, green: 0.85, blue: 0.40, alpha: 1)
+        fillColor = SKColor(red: 1.0, green: 0.75, blue: 0.20, alpha: 0.85)
+        strokeColor = SKColor(red: 1.0, green: 0.85, blue: 0.40, alpha: 1)
         lineWidth = 2
 
         physicsBody = SKPhysicsBody(rectangleOf: size)

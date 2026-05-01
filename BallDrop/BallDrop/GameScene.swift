@@ -79,12 +79,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         let radius: CGFloat = ballRadius
-        let colors: [NSColor] = [
-            NSColor(red: 1.0, green: 0.42, blue: 0.54, alpha: 1),
-            NSColor(red: 1.0, green: 0.70, blue: 0.28, alpha: 1),
-            NSColor(red: 0.53, green: 0.84, blue: 0.55, alpha: 1),
-            NSColor(red: 0.70, green: 0.53, blue: 0.87, alpha: 1),
-            NSColor(red: 1.0, green: 0.87, blue: 0.37, alpha: 1),
+        let colors: [SKColor] = [
+            SKColor(red: 1.0, green: 0.42, blue: 0.54, alpha: 1),
+            SKColor(red: 1.0, green: 0.70, blue: 0.28, alpha: 1),
+            SKColor(red: 0.53, green: 0.84, blue: 0.55, alpha: 1),
+            SKColor(red: 0.70, green: 0.53, blue: 0.87, alpha: 1),
+            SKColor(red: 1.0, green: 0.87, blue: 0.37, alpha: 1),
         ]
 
         let ball = SKShapeNode(circleOfRadius: radius)

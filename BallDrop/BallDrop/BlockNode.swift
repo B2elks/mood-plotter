@@ -20,7 +20,7 @@ class BlockNode: SKShapeNode {
 
         name = "block"
         fillColor = .white
-        strokeColor = NSColor(white: 0.85, alpha: 1)
+        strokeColor = SKColor(white: 0.85, alpha: 1)
         lineWidth = 1
         alpha = 0.9
 
@@ -68,7 +68,7 @@ class BlockNode: SKShapeNode {
                                                size: size),
                           cornerWidth: 4, cornerHeight: 4, transform: nil)
             physicsBody = SKPhysicsBody(rectangleOf: size)
-            fillColor = NSColor(red: 0.40, green: 0.78, blue: 0.45, alpha: 1)
+            fillColor = SKColor(red: 0.40, green: 0.78, blue: 0.45, alpha: 1)
 
             let zigzag = SKShapeNode()
             let zPath = CGMutablePath()
@@ -83,7 +83,7 @@ class BlockNode: SKShapeNode {
                 up.toggle()
             }
             zigzag.path = zPath
-            zigzag.strokeColor = NSColor.white.withAlphaComponent(0.85)
+            zigzag.strokeColor = SKColor.white.withAlphaComponent(0.85)
             zigzag.lineWidth = 1.5
             addChild(zigzag)
 
@@ -93,7 +93,7 @@ class BlockNode: SKShapeNode {
                                                size: size),
                           cornerWidth: 4, cornerHeight: 4, transform: nil)
             physicsBody = SKPhysicsBody(rectangleOf: size)
-            fillColor = NSColor(red: 1.0, green: 0.55, blue: 0.20, alpha: 1)
+            fillColor = SKColor(red: 1.0, green: 0.55, blue: 0.20, alpha: 1)
 
             let arrow = SKShapeNode()
             let aPath = CGMutablePath()
@@ -102,8 +102,8 @@ class BlockNode: SKShapeNode {
             aPath.addLine(to: CGPoint(x: 5, y: -2))
             aPath.closeSubpath()
             arrow.path = aPath
-            arrow.fillColor = NSColor.white
-            arrow.strokeColor = NSColor.white
+            arrow.fillColor = SKColor.white
+            arrow.strokeColor = SKColor.white
             arrow.alpha = 0.9
             addChild(arrow)
         }
@@ -145,14 +145,14 @@ class BlockNode: SKShapeNode {
         linePath.move(to: .zero)
         linePath.addLine(to: offset)
         line.path = linePath
-        line.strokeColor = NSColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 0.5)
+        line.strokeColor = SKColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 0.5)
         line.lineWidth = 1
         addChild(line)
 
         let handle = SKShapeNode(circleOfRadius: 6)
         handle.position = offset
-        handle.fillColor = NSColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 0.7)
-        handle.strokeColor = NSColor.white
+        handle.fillColor = SKColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 0.7)
+        handle.strokeColor = SKColor.white
         handle.lineWidth = 1
         handle.name = "rotateHandle"
         addChild(handle)

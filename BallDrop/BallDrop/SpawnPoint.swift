@@ -9,7 +9,7 @@ class SpawnPoint: SKShapeNode {
 
         let radius: CGFloat = 14
         path = CGPath(ellipseIn: CGRect(x: -radius, y: -radius, width: radius*2, height: radius*2), transform: nil)
-        fillColor = NSColor.white.withAlphaComponent(0.6)
+        fillColor = SKColor.white.withAlphaComponent(0.6)
         strokeColor = .white
         lineWidth = 2
 

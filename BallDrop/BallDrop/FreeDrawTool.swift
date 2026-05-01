@@ -14,7 +14,7 @@ class FreeDrawTool {
         points = [point]
         previewNode?.removeFromParent()
         previewNode = SKShapeNode()
-        previewNode?.strokeColor = NSColor.white.withAlphaComponent(0.5)
+        previewNode?.strokeColor = SKColor.white.withAlphaComponent(0.5)
         previewNode?.lineWidth = 6
         previewNode?.lineCap = .round
         previewNode?.lineJoin = .round
