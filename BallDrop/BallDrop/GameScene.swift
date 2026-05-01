@@ -215,10 +215,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spawnScoreZone()
     }
 
-    override func mouseDown(with event: NSEvent) {
+    private func handlePrimaryDown(at location: CGPoint) {
         rotatingNode = nil
-
-        let location = event.location(in: self)
 
         let node = atPoint(location)
         if node.name == "rotateHandle", let block = node.parent {
@@ -246,9 +244,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-    override func mouseDragged(with event: NSEvent) {
-        let location = event.location(in: self)
-
+    private func handlePrimaryDragged(at location: CGPoint) {
         if let block = rotatingNode {
             let dx = location.x - block.position.x
             let dy = location.y - block.position.y
@@ -266,7 +262,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         node.position = location
     }
 
-    override func mouseUp(with event: NSEvent) {
+    private func handlePrimaryUp() {
         if rotatingNode != nil {
             rotatingNode = nil
             return
@@ -281,8 +277,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         draggedNode = nil
     }
 
-    override func rightMouseDown(with event: NSEvent) {
-        let location = event.location(in: self)
+    func rotateBlock(at location: CGPoint, by delta: CGFloat) {
+        let node = atPoint(location)
+        let block: SKNode?
+        if node.name == "block" { block = node }
+        else if node.parent?.name == "block" { block = node.parent }
+        else { block = nil }
+        if let block = block {
+            block.zRotation += delta
+        }
+    }
+
+    func removeBlock(at location: CGPoint) {
         let node = atPoint(location)
         if node.name == "block" {
             node.removeFromParent()
@@ -291,16 +297,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+    #if os(macOS)
+    override func mouseDown(with event: NSEvent) {
+        handlePrimaryDown(at: event.location(in: self))
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        handlePrimaryDragged(at: event.location(in: self))
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        handlePrimaryUp()
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        removeBlock(at: event.location(in: self))
+    }
+
     override func scrollWheel(with event: NSEvent) {
-        let location = event.location(in: self)
-        let node = atPoint(location)
-        let block: SKNode?
-        if node.name == "block" { block = node }
-        else if node.parent?.name == "block" { block = node.parent }
-        else { block = nil }
-        if let block = block {
-            block.zRotation += event.deltaY * 0.02
-        }
+        rotateBlock(at: event.location(in: self), by: event.deltaY * 0.02)
     }
 
     override func keyDown(with event: NSEvent) {
@@ -317,4 +332,5 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             break
         }
     }
+    #endif
 }
