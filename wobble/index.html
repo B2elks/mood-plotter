@@ -40,10 +40,12 @@
   .spacer { flex: 1; }
 
   #canvas { flex: 1; display: block; cursor: crosshair; background: #111; }
+  #canvas.select-mode { cursor: default; }
 </style>
 </head>
 <body>
   <div id="toolbar">
+    <button class="tool-btn" data-tool="select" title="Markera">↖</button>
     <button class="tool-btn active" data-tool="pen" title="Penna">✏</button>
     <button class="tool-btn" data-tool="circle" title="Cirkel">○</button>
     <button class="tool-btn" data-tool="square" title="Kvadrat">□</button>
@@ -78,6 +80,8 @@
       document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.tool = btn.dataset.tool;
+      selectedIndex = -1;
+      canvas.classList.toggle('select-mode', state.tool === 'select');
     });
   });
 
@@ -92,14 +96,163 @@
   const objects = [];
   let activeStroke = null;
   let activeShape = null;
+  let selectedIndex = -1;
+  let dragMode = null;       // 'move' | 'rotate' | null
+  let dragData = null;
+
+  const HANDLE_OFFSET = 30;
+  const HANDLE_RADIUS = 7;
 
   function canvasPos(e) {
     const r = canvas.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
 
+  // Geometry helpers ---------------------------------------------------------
+
+  function strokeBoundsLocal(obj) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of obj.points) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, w: maxX - minX, h: maxY - minY };
+  }
+
+  function objCenter(obj) {
+    if (obj.type === 'pen') {
+      const b = strokeBoundsLocal(obj);
+      return { x: b.cx, y: b.cy };
+    }
+    return { x: obj.x, y: obj.y };
+  }
+
+  function objHalfExtents(obj) {
+    if (obj.type === 'pen') {
+      const b = strokeBoundsLocal(obj);
+      const pad = obj.width + 6;
+      return { hw: b.w / 2 + pad, hh: b.h / 2 + pad };
+    }
+    if (obj.type === 'text') {
+      ctx.font = `${obj.size}px sans-serif`;
+      const w = ctx.measureText(obj.text).width;
+      return { hw: w / 2 + 4, hh: obj.size / 2 + 4 };
+    }
+    return { hw: obj.size, hh: obj.size };
+  }
+
+  function rotationHandleWorld(obj) {
+    const c = objCenter(obj);
+    const ext = objHalfExtents(obj);
+    const dist = ext.hh + HANDLE_OFFSET;
+    const r = obj.rotation || 0;
+    const lx = 0, ly = -dist;
+    return {
+      x: c.x + lx * Math.cos(r) - ly * Math.sin(r),
+      y: c.y + lx * Math.sin(r) + ly * Math.cos(r),
+    };
+  }
+
+  function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+    const d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by);
+    const d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy);
+    const d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay);
+    const hasNeg = d1 < 0 || d2 < 0 || d3 < 0;
+    const hasPos = d1 > 0 || d2 > 0 || d3 > 0;
+    return !(hasNeg && hasPos);
+  }
+
+  function pointToSegmentDist(p, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+    let t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  }
+
+  function hitObject(obj, p) {
+    const c = objCenter(obj);
+    const r = -(obj.rotation || 0);
+    const dx = p.x - c.x, dy = p.y - c.y;
+    const lx = dx * Math.cos(r) - dy * Math.sin(r);
+    const ly = dx * Math.sin(r) + dy * Math.cos(r);
+
+    if (obj.type === 'pen') {
+      const tol = obj.width / 2 + 6;
+      for (let i = 1; i < obj.points.length; i++) {
+        const a = { x: obj.points[i - 1].x - c.x, y: obj.points[i - 1].y - c.y };
+        const b = { x: obj.points[i].x - c.x, y: obj.points[i].y - c.y };
+        if (pointToSegmentDist({ x: lx, y: ly }, a, b) < tol) return true;
+      }
+      return false;
+    }
+    if (obj.type === 'circle') return Math.hypot(lx, ly) < obj.size;
+    if (obj.type === 'square') return Math.abs(lx) < obj.size && Math.abs(ly) < obj.size;
+    if (obj.type === 'triangle') {
+      const s = obj.size;
+      return pointInTriangle(lx, ly, 0, -s, s * 0.866, s * 0.5, -s * 0.866, s * 0.5);
+    }
+    if (obj.type === 'text') {
+      const ext = objHalfExtents(obj);
+      return Math.abs(lx) < ext.hw && Math.abs(ly) < ext.hh;
+    }
+    return false;
+  }
+
+  function hitTopmost(p) {
+    for (let i = objects.length - 1; i >= 0; i--) {
+      if (hitObject(objects[i], p)) return i;
+    }
+    return -1;
+  }
+
+  // Mouse handling -----------------------------------------------------------
+
   canvas.addEventListener('mousedown', e => {
     const p = canvasPos(e);
+
+    if (state.tool === 'select') {
+      e.preventDefault();
+      // Check rotation handle first
+      if (selectedIndex >= 0) {
+        const h = rotationHandleWorld(objects[selectedIndex]);
+        if (Math.hypot(p.x - h.x, p.y - h.y) < HANDLE_RADIUS + 4) {
+          const obj = objects[selectedIndex];
+          const c = objCenter(obj);
+          dragMode = 'rotate';
+          dragData = {
+            startAngle: Math.atan2(p.y - c.y, p.x - c.x),
+            origRotation: obj.rotation || 0,
+          };
+          return;
+        }
+      }
+      const hit = hitTopmost(p);
+      if (hit >= 0) {
+        selectedIndex = hit;
+        const obj = objects[hit];
+        if (obj.type === 'pen') {
+          dragMode = 'move';
+          dragData = {
+            startX: p.x, startY: p.y,
+            origPoints: obj.points.map(pt => ({ x: pt.x, y: pt.y })),
+          };
+        } else {
+          dragMode = 'move';
+          dragData = {
+            startX: p.x, startY: p.y,
+            origX: obj.x, origY: obj.y,
+          };
+        }
+      } else {
+        selectedIndex = -1;
+      }
+      return;
+    }
+
     if (state.tool === 'pen') {
       activeStroke = {
         type: 'pen',
@@ -107,6 +260,7 @@
         color: state.color,
         width: state.width,
         phase: Math.random() * Math.PI * 2,
+        rotation: 0,
       };
       objects.push(activeStroke);
     } else if (state.tool === 'text') {
@@ -120,10 +274,56 @@
         size: 2,
         color: state.color,
         phase: Math.random() * Math.PI * 2,
+        rotation: 0,
       };
       objects.push(activeShape);
     }
   });
+
+  canvas.addEventListener('mousemove', e => {
+    const p = canvasPos(e);
+
+    if (dragMode === 'move' && selectedIndex >= 0) {
+      const obj = objects[selectedIndex];
+      const dx = p.x - dragData.startX;
+      const dy = p.y - dragData.startY;
+      if (obj.type === 'pen') {
+        for (let i = 0; i < obj.points.length; i++) {
+          obj.points[i].x = dragData.origPoints[i].x + dx;
+          obj.points[i].y = dragData.origPoints[i].y + dy;
+        }
+      } else {
+        obj.x = dragData.origX + dx;
+        obj.y = dragData.origY + dy;
+      }
+      return;
+    }
+    if (dragMode === 'rotate' && selectedIndex >= 0) {
+      const obj = objects[selectedIndex];
+      const c = objCenter(obj);
+      const angle = Math.atan2(p.y - c.y, p.x - c.x);
+      obj.rotation = dragData.origRotation + (angle - dragData.startAngle);
+      return;
+    }
+
+    if (activeStroke) {
+      const last = activeStroke.points[activeStroke.points.length - 1];
+      if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
+        activeStroke.points.push(p);
+      }
+    } else if (activeShape) {
+      activeShape.size = Math.max(2, Math.hypot(p.x - activeShape.x, p.y - activeShape.y));
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    activeStroke = null;
+    activeShape = null;
+    dragMode = null;
+    dragData = null;
+  });
+
+  // Text input ---------------------------------------------------------------
 
   function spawnTextInput(p) {
     const size = state.width * 4 + 12;
@@ -132,7 +332,7 @@
     input.type = 'text';
     input.style.cssText = `
       position: absolute;
-      left: ${r.left + p.x}px;
+      left: ${r.left + p.x - 4}px;
       top: ${r.top + p.y - size}px;
       font: ${size}px sans-serif;
       color: ${state.color};
@@ -151,15 +351,19 @@
     const finish = (commit) => {
       if (done) return;
       done = true;
-      if (commit && input.value.trim()) {
+      const text = input.value.trim();
+      if (commit && text) {
+        ctx.font = `${size}px sans-serif`;
+        const w = ctx.measureText(text).width;
         objects.push({
           type: 'text',
-          x: p.x,
-          y: p.y,
-          text: input.value,
+          x: p.x + w / 2,
+          y: p.y - size / 2,
+          text,
           size,
           color: state.color,
           phase: Math.random() * Math.PI * 2,
+          rotation: 0,
         });
       }
       input.remove();
@@ -172,32 +376,20 @@
     input.addEventListener('blur', () => finish(true));
   }
 
-  canvas.addEventListener('mousemove', e => {
-    const p = canvasPos(e);
-    if (activeStroke) {
-      const last = activeStroke.points[activeStroke.points.length - 1];
-      if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
-        activeStroke.points.push(p);
-      }
-    } else if (activeShape) {
-      activeShape.size = Math.max(2, Math.hypot(p.x - activeShape.x, p.y - activeShape.y));
-    }
-  });
+  // Wobble / rendering -------------------------------------------------------
 
-  window.addEventListener('mouseup', () => {
-    activeStroke = null;
-    activeShape = null;
-  });
-
-  const WOBBLE_SPEED = 1.5;       // rad/sec
-  const WOBBLE_AMP = 2;           // px for stroke points
-
-  const SHAPE_SCALE_AMP = 0.05;   // ±5% size
-  const SHAPE_TRANSLATE_AMP = 2;  // px
-  const SHAPE_ROTATE_AMP = 0.05;  // rad (~3°)
+  const WOBBLE_SPEED = 1.5;
+  const WOBBLE_AMP = 2;
+  const SHAPE_SCALE_AMP = 0.05;
+  const SHAPE_TRANSLATE_AMP = 2;
+  const SHAPE_ROTATE_AMP = 0.05;
 
   function drawStroke(obj, t) {
     if (obj.points.length < 2) return;
+    const b = strokeBoundsLocal(obj);
+    ctx.save();
+    ctx.translate(b.cx, b.cy);
+    ctx.rotate(obj.rotation || 0);
     ctx.strokeStyle = obj.color;
     ctx.lineWidth = obj.width;
     ctx.lineCap = 'round';
@@ -208,10 +400,13 @@
       const ph = obj.phase + i * 0.15;
       const dx = Math.sin(t * WOBBLE_SPEED + ph) * WOBBLE_AMP;
       const dy = Math.cos(t * WOBBLE_SPEED * 1.3 + ph) * WOBBLE_AMP;
-      if (i === 0) ctx.moveTo(p.x + dx, p.y + dy);
-      else ctx.lineTo(p.x + dx, p.y + dy);
+      const lx = p.x - b.cx + dx;
+      const ly = p.y - b.cy + dy;
+      if (i === 0) ctx.moveTo(lx, ly);
+      else ctx.lineTo(lx, ly);
     }
     ctx.stroke();
+    ctx.restore();
   }
 
   function drawShape(obj, t) {
@@ -224,7 +419,7 @@
     const s = obj.size * scale;
     ctx.save();
     ctx.translate(obj.x + dx, obj.y + dy);
-    ctx.rotate(rot);
+    ctx.rotate((obj.rotation || 0) + rot);
     ctx.fillStyle = obj.color;
 
     if (obj.type === 'circle') {
@@ -254,12 +449,36 @@
 
     ctx.save();
     ctx.translate(obj.x + dx, obj.y + dy);
-    ctx.rotate(rot);
+    ctx.rotate((obj.rotation || 0) + rot);
     ctx.scale(scale, scale);
     ctx.fillStyle = obj.color;
     ctx.font = `${obj.size}px sans-serif`;
-    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.fillText(obj.text, 0, 0);
+    ctx.restore();
+  }
+
+  function drawSelection(obj) {
+    const c = objCenter(obj);
+    const ext = objHalfExtents(obj);
+    const r = obj.rotation || 0;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(r);
+    ctx.strokeStyle = '#6cf';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(-ext.hw, -ext.hh, ext.hw * 2, ext.hh * 2);
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(0, -ext.hh);
+    ctx.lineTo(0, -ext.hh - HANDLE_OFFSET);
+    ctx.stroke();
+    ctx.fillStyle = '#6cf';
+    ctx.beginPath();
+    ctx.arc(0, -ext.hh - HANDLE_OFFSET, HANDLE_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
@@ -271,12 +490,16 @@
       else if (obj.type === 'text') drawText(obj, t);
       else drawShape(obj, t);
     }
+    if (selectedIndex >= 0 && selectedIndex < objects.length) {
+      drawSelection(objects[selectedIndex]);
+    }
     requestAnimationFrame(render);
   }
   render();
 
   document.getElementById('clear').addEventListener('click', () => {
     objects.length = 0;
+    selectedIndex = -1;
   });
 </script>
 </body>
