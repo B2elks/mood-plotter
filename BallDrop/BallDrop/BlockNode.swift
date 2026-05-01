@@ -111,13 +111,15 @@ class BlockNode: SKShapeNode {
         physicsBody?.isDynamic = false
         physicsBody?.friction = 0.3
         physicsBody?.restitution = 0.5
+        physicsBody?.categoryBitMask = PhysicsCategory.block
+        physicsBody?.contactTestBitMask = PhysicsCategory.ball
 
         if type == .trampoline {
             physicsBody?.restitution = 1.4
         }
 
         if type == .catapult {
-            physicsBody?.categoryBitMask = PhysicsCategory.catapult
+            physicsBody?.categoryBitMask = PhysicsCategory.block | PhysicsCategory.catapult
             physicsBody?.contactTestBitMask = PhysicsCategory.ball
         }
 

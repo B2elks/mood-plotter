@@ -63,6 +63,8 @@ class FreeDrawTool {
             block.physicsBody?.isDynamic = false
             block.physicsBody?.friction = 0.3
             block.physicsBody?.restitution = 0.5
+            block.physicsBody?.categoryBitMask = PhysicsCategory.block
+            block.physicsBody?.contactTestBitMask = PhysicsCategory.ball
         }
 
         points = []

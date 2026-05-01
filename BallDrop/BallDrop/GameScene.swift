@@ -7,6 +7,8 @@ enum PhysicsCategory {
     static let ball: UInt32       = 1 << 0
     static let scoreZone: UInt32  = 1 << 1
     static let catapult: UInt32   = 1 << 2
+    static let block: UInt32      = 1 << 3
+    static let wall: UInt32       = 1 << 4
 }
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
@@ -60,6 +62,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         leftWall.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: wallThickness, height: size.height))
         leftWall.physicsBody?.isDynamic = false
         leftWall.physicsBody?.friction = 0.2
+        leftWall.physicsBody?.categoryBitMask = PhysicsCategory.wall
+        leftWall.physicsBody?.contactTestBitMask = PhysicsCategory.ball
         addChild(leftWall)
 
         let rightWall = SKNode()
@@ -68,6 +72,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         rightWall.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: wallThickness, height: size.height))
         rightWall.physicsBody?.isDynamic = false
         rightWall.physicsBody?.friction = 0.2
+        rightWall.physicsBody?.categoryBitMask = PhysicsCategory.wall
+        rightWall.physicsBody?.contactTestBitMask = PhysicsCategory.ball
         addChild(rightWall)
 
         spawnPointNode?.position = CGPoint(x: size.width / 2, y: size.height - 30)
