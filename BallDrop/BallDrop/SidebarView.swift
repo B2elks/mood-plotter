@@ -5,6 +5,7 @@ struct SidebarView: View {
     @Binding var spawnRate: Double
     @Binding var ballRadius: Double
     @Binding var isPaused: Bool
+    @Binding var isMuted: Bool
     @Binding var score: Int
     var onPlaceBlock: (BlockType) -> Void
     var onClearBlocks: () -> Void
@@ -122,6 +123,13 @@ struct SidebarView: View {
 
                     Button(action: onClearBlocks) {
                         Label("Rensa", systemImage: "trash")
+                            .font(.system(size: 12))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .controlSize(.small)
+
+                    Button(action: { isMuted.toggle() }) {
+                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 12))
                             .frame(maxWidth: .infinity)
                     }

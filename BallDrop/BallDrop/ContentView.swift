@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var ballRadius: Double = 8
     @State private var isPaused: Bool = false
     @State private var score: Int = 0
+    @State private var isMuted: Bool = false
     @State private var gameScene: GameScene = {
         let scene = GameScene(size: CGSize(width: 800, height: 700))
         scene.scaleMode = .resizeFill
@@ -20,6 +21,7 @@ struct ContentView: View {
                 spawnRate: $spawnRate,
                 ballRadius: $ballRadius,
                 isPaused: $isPaused,
+                isMuted: $isMuted,
                 score: $score,
                 onPlaceBlock: { type in
                     gameScene.addBlock(type: type,
@@ -80,6 +82,9 @@ struct ContentView: View {
         }
         .onChange(of: ballRadius) { _, newValue in
             gameScene.ballRadius = CGFloat(newValue)
+        }
+        .onChange(of: isMuted) { _, newValue in
+            gameScene.soundManager.isMuted = newValue
         }
         .onAppear {
             gameScene.onScoreChanged = { newScore in
