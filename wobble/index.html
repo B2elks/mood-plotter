@@ -110,6 +110,7 @@
       };
       objects.push(activeStroke);
     } else if (state.tool === 'text') {
+      e.preventDefault();
       spawnTextInput(p);
     } else {
       activeShape = {
