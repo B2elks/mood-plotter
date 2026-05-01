@@ -22,6 +22,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     var onScoreChanged: ((Int) -> Void)?
     private var scoreZone: ScoreZone?
+    private var rotatingNode: SKNode?
+    private var rotateInitialAngle: CGFloat = 0
+    private var rotateInitialZRotation: CGFloat = 0
 
     override func didMove(to view: SKView) {
         backgroundColor = .clear
@@ -216,6 +219,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let location = event.location(in: self)
 
         let node = atPoint(location)
+        if node.name == "rotateHandle", let block = node.parent {
+            rotatingNode = block
+            let dx = location.x - block.position.x
+            let dy = location.y - block.position.y
+            rotateInitialAngle = atan2(dy, dx)
+            rotateInitialZRotation = block.zRotation
+            return
+        }
+
         if node.name == "spawnPoint" || node.parent?.name == "spawnPoint" {
             draggedNode = spawnPointNode
             return
@@ -235,6 +247,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func mouseDragged(with event: NSEvent) {
         let location = event.location(in: self)
 
+        if let block = rotatingNode {
+            let dx = location.x - block.position.x
+            let dy = location.y - block.position.y
+            let currentAngle = atan2(dy, dx)
+            block.zRotation = rotateInitialZRotation + (currentAngle - rotateInitialAngle)
+            return
+        }
+
         if drawMode {
             freeDrawTool?.continueDraw(at: location)
             return
@@ -245,6 +265,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func mouseUp(with event: NSEvent) {
+        if rotatingNode != nil {
+            rotatingNode = nil
+            return
+        }
+
         if drawMode {
             if let block = freeDrawTool?.endDraw() {
                 addChild(block)

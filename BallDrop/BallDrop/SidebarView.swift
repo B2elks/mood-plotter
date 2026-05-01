@@ -137,6 +137,7 @@ struct SidebarView: View {
                 Text("C = rensa block")
                 Text("+/- = hastighet")
                 Text("Scroll = rotera block")
+                Text("Drag blå handtag = rotera")
                 Text("Högerklick = ta bort")
             }
             .font(.system(size: 10))
