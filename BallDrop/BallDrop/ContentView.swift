@@ -34,6 +34,19 @@ struct ContentView: View {
             )
 
             ZStack(alignment: .topTrailing) {
+                #if os(iOS)
+                SpriteKitView(scene: gameScene)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.53, green: 0.81, blue: 0.92),
+                                Color(red: 0.60, green: 0.85, blue: 0.78)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                #else
                 SpriteView(scene: gameScene, options: [.allowsTransparency])
                     .background(
                         LinearGradient(
@@ -45,6 +58,7 @@ struct ContentView: View {
                             endPoint: .bottom
                         )
                     )
+                #endif
 
                 Text("\(score)")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
