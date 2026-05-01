@@ -216,6 +216,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func mouseDown(with event: NSEvent) {
+        rotatingNode = nil
+
         let location = event.location(in: self)
 
         let node = atPoint(location)
