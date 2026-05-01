@@ -26,10 +26,6 @@
     <false/>
     <key>LSRequiresIPhoneOS</key>
     <true/>
-    <key>UIDeviceFamily</key>
-    <array>
-        <integer>2</integer>
-    </array>
     <key>UILaunchScreen</key>
     <dict/>
     <key>UIRequiredDeviceCapabilities</key>
