@@ -19,11 +19,13 @@
 		8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
 		9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
 		B094E88C6504E68C951B8802 /* SpawnPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */; };
+		B64BB5ED6A63422AED4ED7F8 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C69F2B28F582EF9E7373CF /* SoundManager.swift */; };
 		CB4FF4BD661C6D65EBCB5E1A /* SpawnPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */; };
 		CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */; };
 		DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
 		E9D3B563B8A6D230C0C9B68D /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493AC4887126BC1B32964193 /* BlockNode.swift */; };
 		EBCA732ED60E4155625132A1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF68C57DE3882B17E759E5D3 /* ContentView.swift */; };
+		FABC962AFD6A249BEA6A60FA /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C69F2B28F582EF9E7373CF /* SoundManager.swift */; };
 		FCEB1485B585CCBCBD111A2F /* BallDropApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E59C7076708EF40A0764AB /* BallDropApp.swift */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +35,7 @@
 		30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreZone.swift; sourceTree = "<group>"; };
 		308EBCD25BB912BC7E86D419 /* BallDrop-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BallDrop-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		493AC4887126BC1B32964193 /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
+		92C69F2B28F582EF9E7373CF /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		99A0BA57667C7FF0951603FF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9B70F311CB9E21263D1FEA46 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpawnPoint.swift; sourceTree = "<group>"; };
@@ -71,6 +74,7 @@
 				0A94ED2363F019BE3BBE2F12 /* GameScene.swift */,
 				30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */,
 				F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */,
+				92C69F2B28F582EF9E7373CF /* SoundManager.swift */,
 				BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */,
 				F409F225D3ABC670FFC85CC1 /* iOS */,
 			);
@@ -179,6 +183,7 @@
 				DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */,
 				8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */,
 				0343D21F5BDBB2AC4DE44A0B /* SidebarView.swift in Sources */,
+				B64BB5ED6A63422AED4ED7F8 /* SoundManager.swift in Sources */,
 				B094E88C6504E68C951B8802 /* SpawnPoint.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -194,6 +199,7 @@
 				77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */,
 				9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */,
 				CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */,
+				FABC962AFD6A249BEA6A60FA /* SoundManager.swift in Sources */,
 				CB4FF4BD661C6D65EBCB5E1A /* SpawnPoint.swift in Sources */,
 				3890B129561D54A2A45C12A8 /* SpriteKitView.swift in Sources */,
 			);

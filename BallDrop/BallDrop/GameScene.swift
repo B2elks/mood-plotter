@@ -30,6 +30,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var rotatingNode: SKNode?
     private var rotateInitialAngle: CGFloat = 0
     private var rotateInitialZRotation: CGFloat = 0
+    let soundManager = SoundManager()
 
     override func didMove(to view: SKView) {
         backgroundColor = .clear
@@ -114,10 +115,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             SKColor(red: 0.70, green: 0.53, blue: 0.87, alpha: 1),
             SKColor(red: 1.0, green: 0.87, blue: 0.37, alpha: 1),
         ]
+        let colorIndex = Int.random(in: 0..<colors.count)
 
         let ball = SKShapeNode(circleOfRadius: radius)
         ball.name = "ball"
-        ball.fillColor = colors.randomElement()!
+        ball.fillColor = colors[colorIndex]
+        ball.userData = ["colorIndex": colorIndex]
         ball.strokeColor = .white
         ball.lineWidth = 2
         ball.position = spawnPointNode.position
@@ -129,7 +132,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody?.angularDamping = 0.1
         ball.physicsBody?.mass = 0.1
         ball.physicsBody?.categoryBitMask = PhysicsCategory.ball
-        ball.physicsBody?.contactTestBitMask = PhysicsCategory.scoreZone | PhysicsCategory.catapult
+        ball.physicsBody?.contactTestBitMask = PhysicsCategory.scoreZone | PhysicsCategory.catapult | PhysicsCategory.block | PhysicsCategory.wall
 
         let dx = CGFloat.random(in: -0.3...0.3)
         ball.physicsBody?.applyImpulse(CGVector(dx: dx, dy: 0))
@@ -184,8 +187,35 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let bodyA = contact.bodyA
         let bodyB = contact.bodyB
 
-        if (bodyA.categoryBitMask == PhysicsCategory.ball && bodyB.categoryBitMask == PhysicsCategory.catapult) ||
-           (bodyA.categoryBitMask == PhysicsCategory.catapult && bodyB.categoryBitMask == PhysicsCategory.ball) {
+        // Ball ↔ wall: pure sound, no other physics effect.
+        if (bodyA.categoryBitMask == PhysicsCategory.ball && bodyB.categoryBitMask == PhysicsCategory.wall) ||
+           (bodyA.categoryBitMask == PhysicsCategory.wall && bodyB.categoryBitMask == PhysicsCategory.ball) {
+            let ballNode = bodyA.categoryBitMask == PhysicsCategory.ball ? bodyA.node : bodyB.node
+            soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .wall)
+            return
+        }
+
+        // Ball ↔ block (incl. trampoline). Catapult bodies have .block|.catapult and are
+        // explicitly excluded so the catapult branch below handles them.
+        let aIsBall = bodyA.categoryBitMask == PhysicsCategory.ball
+        let aIsBlock = (bodyA.categoryBitMask & PhysicsCategory.block) != 0 && (bodyA.categoryBitMask & PhysicsCategory.catapult) == 0
+        let bIsBall = bodyB.categoryBitMask == PhysicsCategory.ball
+        let bIsBlock = (bodyB.categoryBitMask & PhysicsCategory.block) != 0 && (bodyB.categoryBitMask & PhysicsCategory.catapult) == 0
+        if (aIsBall && bIsBlock) || (aIsBlock && bIsBall) {
+            let ballNode = aIsBall ? bodyA.node : bodyB.node
+            let blockNode = aIsBall ? bodyB.node : bodyA.node
+            let surface: SoundManager.Surface
+            if let bn = blockNode as? BlockNode, bn.blockType == .trampoline {
+                surface = .trampoline
+            } else {
+                surface = .block
+            }
+            soundManager.play(colorIndex: colorIndex(of: ballNode), surface: surface)
+            return
+        }
+
+        if (bodyA.categoryBitMask == PhysicsCategory.ball && (bodyB.categoryBitMask & PhysicsCategory.catapult) != 0) ||
+           ((bodyA.categoryBitMask & PhysicsCategory.catapult) != 0 && bodyB.categoryBitMask == PhysicsCategory.ball) {
             let ballPB = bodyA.categoryBitMask == PhysicsCategory.ball ? bodyA : bodyB
             let catPB = ballPB === bodyA ? bodyB : bodyA
             guard let ballNode = ballPB.node, let catNode = catPB.node else { return }
@@ -201,6 +231,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 SKAction.scale(to: 1.0, duration: 0.08),
             ])
             catNode.run(flash)
+            soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .catapult)
             return
         }
 
@@ -241,8 +272,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         zoneNode.physicsBody = nil
         zoneNode.run(zoneFlash)
 
+        soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .scoreZone)
         score += 1
         spawnScoreZone()
+    }
+
+    private func colorIndex(of node: SKNode?) -> Int {
+        (node?.userData?["colorIndex"] as? Int) ?? 0
     }
 
     private func handlePrimaryDown(at location: CGPoint) {
