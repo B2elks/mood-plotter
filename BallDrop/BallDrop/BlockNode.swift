@@ -120,9 +120,41 @@ class BlockNode: SKShapeNode {
             physicsBody?.categoryBitMask = PhysicsCategory.catapult
             physicsBody?.contactTestBitMask = PhysicsCategory.ball
         }
+
+        let handleOffset: CGPoint
+        switch type {
+        case .horizontalRect, .diagonal, .trampoline, .catapult:
+            handleOffset = CGPoint(x: 50 + 12, y: 0)
+        case .verticalRect:
+            handleOffset = CGPoint(x: 0, y: 50 + 12)
+        case .circle:
+            handleOffset = CGPoint(x: 20 + 12, y: 0)
+        case .triangle:
+            handleOffset = CGPoint(x: 0, y: 20 + 12)
+        }
+        addRotateHandle(at: handleOffset)
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) not implemented")
+    }
+
+    private func addRotateHandle(at offset: CGPoint) {
+        let line = SKShapeNode()
+        let linePath = CGMutablePath()
+        linePath.move(to: .zero)
+        linePath.addLine(to: offset)
+        line.path = linePath
+        line.strokeColor = NSColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 0.5)
+        line.lineWidth = 1
+        addChild(line)
+
+        let handle = SKShapeNode(circleOfRadius: 6)
+        handle.position = offset
+        handle.fillColor = NSColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 0.7)
+        handle.strokeColor = NSColor.white
+        handle.lineWidth = 1
+        handle.name = "rotateHandle"
+        addChild(handle)
     }
 }
