@@ -10,9 +10,21 @@ struct SidebarView: View {
     var onPlaceBlock: (BlockType) -> Void
     var onClearBlocks: () -> Void
     var onResetScore: () -> Void
+    var onHome: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            if let onHome = onHome {
+                Button(action: onHome) {
+                    Label("Hem", systemImage: "house.fill")
+                        .font(.system(size: 13))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
+            }
+
             Text("Ball Drop")
                 .font(.system(size: 18, weight: .bold))
                 .padding(.horizontal)
