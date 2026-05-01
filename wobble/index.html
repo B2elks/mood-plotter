@@ -90,6 +90,7 @@
 
   const objects = [];
   let activeStroke = null;
+  let activeShape = null;
 
   function canvasPos(e) {
     const r = canvas.getBoundingClientRect();
@@ -108,27 +109,34 @@
       };
       objects.push(activeStroke);
     } else {
-      objects.push({
+      activeShape = {
         type: state.tool,
         x: p.x,
         y: p.y,
-        size: 60,
+        size: 2,
         color: state.color,
         phase: Math.random() * Math.PI * 2,
-      });
+      };
+      objects.push(activeShape);
     }
   });
 
   canvas.addEventListener('mousemove', e => {
-    if (!activeStroke) return;
     const p = canvasPos(e);
-    const last = activeStroke.points[activeStroke.points.length - 1];
-    if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
-      activeStroke.points.push(p);
+    if (activeStroke) {
+      const last = activeStroke.points[activeStroke.points.length - 1];
+      if (Math.hypot(p.x - last.x, p.y - last.y) > 2) {
+        activeStroke.points.push(p);
+      }
+    } else if (activeShape) {
+      activeShape.size = Math.max(2, Math.hypot(p.x - activeShape.x, p.y - activeShape.y));
     }
   });
 
-  window.addEventListener('mouseup', () => { activeStroke = null; });
+  window.addEventListener('mouseup', () => {
+    activeStroke = null;
+    activeShape = null;
+  });
 
   const WOBBLE_SPEED = 1.5;       // rad/sec
   const WOBBLE_AMP = 2;           // px for stroke points
