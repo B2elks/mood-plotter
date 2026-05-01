@@ -145,7 +145,11 @@ struct SidebarView: View {
             .padding()
         }
         .frame(width: 200)
+        #if os(macOS)
         .background(Color(NSColor.windowBackgroundColor))
+        #else
+        .background(Color(.systemBackground))
+        #endif
     }
 
     @ViewBuilder
