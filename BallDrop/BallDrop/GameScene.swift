@@ -11,6 +11,12 @@ enum PhysicsCategory {
     static let wall: UInt32       = 1 << 4
 }
 
+struct LevelConfig {
+    let blockBudget: [BlockType: Int]
+    let ballCount: Int
+    let scoreTarget: Int
+}
+
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var spawnRate: TimeInterval = 1.5
@@ -31,6 +37,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var rotateInitialAngle: CGFloat = 0
     private var rotateInitialZRotation: CGFloat = 0
     let soundManager = SoundManager()
+
+    var levelConfig: LevelConfig?
+    private var ballsRemaining: Int = 0
+    private var blocksRemaining: [BlockType: Int] = [:]
+
+    var onLevelCompleted: (() -> Void)?
+    var onLevelFailed: (() -> Void)?
+    var onBallsRemainingChanged: ((Int) -> Void)?
+    var onBlocksRemainingChanged: (([BlockType: Int]) -> Void)?
 
     override func didMove(to view: SKView) {
         backgroundColor = .clear
@@ -87,9 +102,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func update(_ currentTime: TimeInterval) {
         guard !isPaused_ else { return }
 
-        if currentTime - lastSpawnTime >= spawnRate {
-            spawnBall()
-            lastSpawnTime = currentTime
+        if let cfg = levelConfig {
+            if ballsRemaining > 0 && currentTime - lastSpawnTime >= spawnRate {
+                spawnBall()
+                ballsRemaining -= 1
+                onBallsRemainingChanged?(ballsRemaining)
+                lastSpawnTime = currentTime
+            }
+            if ballsRemaining == 0
+                && children.first(where: { $0.name == "ball" }) == nil
+                && score < cfg.scoreTarget {
+                onLevelFailed?()
+                levelConfig = nil
+            }
+        } else {
+            if currentTime - lastSpawnTime >= spawnRate {
+                spawnBall()
+                lastSpawnTime = currentTime
+            }
         }
 
         for node in children where node.name == "ball" {
@@ -140,10 +170,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(ball)
     }
 
-    func addBlock(type: BlockType, at position: CGPoint) {
+    @discardableResult
+    func addBlock(type: BlockType, at position: CGPoint) -> Bool {
+        if levelConfig != nil {
+            guard let count = blocksRemaining[type], count > 0 else {
+                return false
+            }
+            blocksRemaining[type] = count - 1
+            onBlocksRemainingChanged?(blocksRemaining)
+        }
         let block = BlockNode(type: type)
         block.position = position
         addChild(block)
+        return true
     }
 
     func clearAllBlocks() {
@@ -181,6 +220,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreZone?.removeFromParent()
         scoreZone = nil
         spawnScoreZone()
+    }
+
+    func startLevel(_ config: LevelConfig) {
+        levelConfig = config
+        ballsRemaining = config.ballCount
+        blocksRemaining = config.blockBudget
+        score = 0
+        clearAllBlocks()
+        children.filter { $0.name == "ball" }.forEach { $0.removeFromParent() }
+        scoreZone?.removeFromParent()
+        scoreZone = nil
+        spawnScoreZone()
+        onBallsRemainingChanged?(ballsRemaining)
+        onBlocksRemainingChanged?(blocksRemaining)
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
@@ -274,6 +327,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .scoreZone)
         score += 1
+        if let cfg = levelConfig, score >= cfg.scoreTarget {
+            onLevelCompleted?()
+            levelConfig = nil
+        }
         spawnScoreZone()
     }
 
