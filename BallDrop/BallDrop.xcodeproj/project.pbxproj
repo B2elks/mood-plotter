@@ -12,6 +12,7 @@
 		0CA0F207389DA289FBB6E446 /* BallDropApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E59C7076708EF40A0764AB /* BallDropApp.swift */; };
 		0F256FE0975B14ED76D1A50C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF68C57DE3882B17E759E5D3 /* ContentView.swift */; };
 		183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */; };
+		27CCC1981A75FDF49C61B0BA /* HomeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D71B84585C246BD0C6BAAD2 /* HomeScreen.swift */; };
 		34D7B40B7FEC860CC8CB242A /* BuildView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A8F9E180FF594763D10A1B3 /* BuildView.swift */; };
 		3890B129561D54A2A45C12A8 /* SpriteKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F861223A753B23358D80ED57 /* SpriteKitView.swift */; };
 		4C84A90EB0C8EC28C68B3BEF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99A0BA57667C7FF0951603FF /* Assets.xcassets */; };
@@ -26,6 +27,7 @@
 		CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */; };
 		D2CEEAC0BB74E6DA7743CA51 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */; };
 		DC5741F997DAE16F9479EF25 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */; };
+		DD6EF10274947AC7F45C8768 /* HomeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D71B84585C246BD0C6BAAD2 /* HomeScreen.swift */; };
 		DE1F8BE740620FBD194171A0 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */; };
 		DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
 		E9D3B563B8A6D230C0C9B68D /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493AC4887126BC1B32964193 /* BlockNode.swift */; };
@@ -37,6 +39,7 @@
 
 /* Begin PBXFileReference section */
 		0A94ED2363F019BE3BBE2F12 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
+		0D71B84585C246BD0C6BAAD2 /* HomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreen.swift; sourceTree = "<group>"; };
 		2262D7C35661953201D6BFAB /* BallDrop-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "BallDrop-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreZone.swift; sourceTree = "<group>"; };
 		308EBCD25BB912BC7E86D419 /* BallDrop-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BallDrop-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -82,6 +85,7 @@
 				FF68C57DE3882B17E759E5D3 /* ContentView.swift */,
 				EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */,
 				0A94ED2363F019BE3BBE2F12 /* GameScene.swift */,
+				0D71B84585C246BD0C6BAAD2 /* HomeScreen.swift */,
 				7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */,
 				DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */,
 				30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */,
@@ -194,6 +198,7 @@
 				0F256FE0975B14ED76D1A50C /* ContentView.swift in Sources */,
 				6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */,
 				DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */,
+				27CCC1981A75FDF49C61B0BA /* HomeScreen.swift in Sources */,
 				DC5741F997DAE16F9479EF25 /* Levels.swift in Sources */,
 				63A42B9415F840F668F5425E /* ProgressStore.swift in Sources */,
 				8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */,
@@ -213,6 +218,7 @@
 				EBCA732ED60E4155625132A1 /* ContentView.swift in Sources */,
 				183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */,
 				77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */,
+				DD6EF10274947AC7F45C8768 /* HomeScreen.swift in Sources */,
 				DE1F8BE740620FBD194171A0 /* Levels.swift in Sources */,
 				D2CEEAC0BB74E6DA7743CA51 /* ProgressStore.swift in Sources */,
 				9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */,
