@@ -34,8 +34,6 @@ targets:
     platform: iOS
     sources:
       - path: BallDrop
-        excludes:
-          - "iOS/LaunchScreen.storyboard"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.b2.balldrop
@@ -43,3 +41,26 @@ targets:
         INFOPLIST_FILE: BallDrop/iOS/Info.plist
         TARGETED_DEVICE_FAMILY: "2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+schemes:
+  BallDrop-Mac:
+    build:
+      targets:
+        BallDrop-Mac: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    archive:
+      config: Release
+
+  BallDrop-iOS:
+    build:
+      targets:
+        BallDrop-iOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    archive:
+      config: Release
