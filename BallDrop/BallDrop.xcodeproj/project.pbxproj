@@ -14,6 +14,7 @@
 		183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */; };
 		3890B129561D54A2A45C12A8 /* SpriteKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F861223A753B23358D80ED57 /* SpriteKitView.swift */; };
 		4C84A90EB0C8EC28C68B3BEF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99A0BA57667C7FF0951603FF /* Assets.xcassets */; };
+		63A42B9415F840F668F5425E /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */; };
 		6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */; };
 		77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
 		8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
@@ -22,6 +23,9 @@
 		B64BB5ED6A63422AED4ED7F8 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C69F2B28F582EF9E7373CF /* SoundManager.swift */; };
 		CB4FF4BD661C6D65EBCB5E1A /* SpawnPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */; };
 		CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */; };
+		D2CEEAC0BB74E6DA7743CA51 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */; };
+		DC5741F997DAE16F9479EF25 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */; };
+		DE1F8BE740620FBD194171A0 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */; };
 		DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
 		E9D3B563B8A6D230C0C9B68D /* BlockNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493AC4887126BC1B32964193 /* BlockNode.swift */; };
 		EBCA732ED60E4155625132A1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF68C57DE3882B17E759E5D3 /* ContentView.swift */; };
@@ -35,11 +39,13 @@
 		30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreZone.swift; sourceTree = "<group>"; };
 		308EBCD25BB912BC7E86D419 /* BallDrop-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BallDrop-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		493AC4887126BC1B32964193 /* BlockNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockNode.swift; sourceTree = "<group>"; };
+		7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Levels.swift; sourceTree = "<group>"; };
 		92C69F2B28F582EF9E7373CF /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		99A0BA57667C7FF0951603FF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9B70F311CB9E21263D1FEA46 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpawnPoint.swift; sourceTree = "<group>"; };
 		D7E59C7076708EF40A0764AB /* BallDropApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDropApp.swift; sourceTree = "<group>"; };
+		DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeDrawTool.swift; sourceTree = "<group>"; };
 		F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		F861223A753B23358D80ED57 /* SpriteKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpriteKitView.swift; sourceTree = "<group>"; };
@@ -72,6 +78,8 @@
 				FF68C57DE3882B17E759E5D3 /* ContentView.swift */,
 				EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */,
 				0A94ED2363F019BE3BBE2F12 /* GameScene.swift */,
+				7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */,
+				DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */,
 				30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */,
 				F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */,
 				92C69F2B28F582EF9E7373CF /* SoundManager.swift */,
@@ -181,6 +189,8 @@
 				0F256FE0975B14ED76D1A50C /* ContentView.swift in Sources */,
 				6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */,
 				DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */,
+				DC5741F997DAE16F9479EF25 /* Levels.swift in Sources */,
+				63A42B9415F840F668F5425E /* ProgressStore.swift in Sources */,
 				8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */,
 				0343D21F5BDBB2AC4DE44A0B /* SidebarView.swift in Sources */,
 				B64BB5ED6A63422AED4ED7F8 /* SoundManager.swift in Sources */,
@@ -197,6 +207,8 @@
 				EBCA732ED60E4155625132A1 /* ContentView.swift in Sources */,
 				183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */,
 				77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */,
+				DE1F8BE740620FBD194171A0 /* Levels.swift in Sources */,
+				D2CEEAC0BB74E6DA7743CA51 /* ProgressStore.swift in Sources */,
 				9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */,
 				CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */,
 				FABC962AFD6A249BEA6A60FA /* SoundManager.swift in Sources */,
