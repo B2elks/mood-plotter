@@ -1,4 +1,7 @@
 import SpriteKit
+#if os(iOS)
+import UIKit
+#endif
 
 enum PhysicsCategory {
     static let ball: UInt32       = 1 << 0
@@ -331,6 +334,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         default:
             break
         }
+    }
+    #endif
+
+    #if os(iOS)
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        handlePrimaryDown(at: touch.location(in: self))
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        handlePrimaryDragged(at: touch.location(in: self))
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        handlePrimaryUp()
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        handlePrimaryUp()
     }
     #endif
 }
