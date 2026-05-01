@@ -3,6 +3,7 @@ import SpriteKit
 enum PhysicsCategory {
     static let ball: UInt32       = 1 << 0
     static let scoreZone: UInt32  = 1 << 1
+    static let catapult: UInt32   = 1 << 2
 }
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
@@ -97,7 +98,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody?.angularDamping = 0.1
         ball.physicsBody?.mass = 0.1
         ball.physicsBody?.categoryBitMask = PhysicsCategory.ball
-        ball.physicsBody?.contactTestBitMask = PhysicsCategory.scoreZone
+        ball.physicsBody?.contactTestBitMask = PhysicsCategory.scoreZone | PhysicsCategory.catapult
 
         let dx = CGFloat.random(in: -0.3...0.3)
         ball.physicsBody?.applyImpulse(CGVector(dx: dx, dy: 0))
@@ -149,6 +150,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
         let bodyA = contact.bodyA
         let bodyB = contact.bodyB
+
+        if (bodyA.categoryBitMask == PhysicsCategory.ball && bodyB.categoryBitMask == PhysicsCategory.catapult) ||
+           (bodyA.categoryBitMask == PhysicsCategory.catapult && bodyB.categoryBitMask == PhysicsCategory.ball) {
+            let ballPB = bodyA.categoryBitMask == PhysicsCategory.ball ? bodyA : bodyB
+            let catPB = ballPB === bodyA ? bodyB : bodyA
+            guard let ballNode = ballPB.node, let catNode = catPB.node else { return }
+
+            let theta = catNode.zRotation
+            let impulse: CGFloat = 1.2
+            let dirX = -sin(theta)
+            let dirY = cos(theta)
+            ballNode.physicsBody?.applyImpulse(CGVector(dx: dirX * impulse, dy: dirY * impulse))
+
+            let flash = SKAction.sequence([
+                SKAction.scale(to: 1.15, duration: 0.08),
+                SKAction.scale(to: 1.0, duration: 0.08),
+            ])
+            catNode.run(flash)
+            return
+        }
 
         let ballBody: SKPhysicsBody?
         let zoneBody: SKPhysicsBody?

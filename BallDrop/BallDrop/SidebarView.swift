@@ -25,7 +25,7 @@ struct SidebarView: View {
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
 
-                ForEach(Array(zip(BlockType.allCases, ["Horisontell", "Vertikal", "Diagonal", "Cirkel", "Triangel", "Studsmatta"])), id: \.0.rawValue) { type, label in
+                ForEach(Array(zip(BlockType.allCases, ["Horisontell", "Vertikal", "Diagonal", "Cirkel", "Triangel", "Studsmatta", "Katapult"])), id: \.0.rawValue) { type, label in
                     Button(action: { onPlaceBlock(type) }) {
                         HStack(spacing: 10) {
                             blockIcon(type)
@@ -175,6 +175,16 @@ struct SidebarView: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color(red: 0.40, green: 0.78, blue: 0.45))
                 .frame(width: 24, height: 6)
+        case .catapult:
+            ZStack {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color(red: 1.0, green: 0.55, blue: 0.20))
+                    .frame(width: 24, height: 6)
+                Triangle()
+                    .fill(Color.white)
+                    .frame(width: 6, height: 5)
+                    .offset(y: -1)
+            }
         }
     }
 }

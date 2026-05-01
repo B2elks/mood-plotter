@@ -7,6 +7,7 @@ enum BlockType: String, CaseIterable {
     case circle
     case triangle
     case trampoline
+    case catapult
 }
 
 class BlockNode: SKShapeNode {
@@ -85,6 +86,26 @@ class BlockNode: SKShapeNode {
             zigzag.strokeColor = NSColor.white.withAlphaComponent(0.85)
             zigzag.lineWidth = 1.5
             addChild(zigzag)
+
+        case .catapult:
+            let size = CGSize(width: 100, height: 12)
+            path = CGPath(roundedRect: CGRect(origin: CGPoint(x: -size.width/2, y: -size.height/2),
+                                               size: size),
+                          cornerWidth: 4, cornerHeight: 4, transform: nil)
+            physicsBody = SKPhysicsBody(rectangleOf: size)
+            fillColor = NSColor(red: 1.0, green: 0.55, blue: 0.20, alpha: 1)
+
+            let arrow = SKShapeNode()
+            let aPath = CGMutablePath()
+            aPath.move(to: CGPoint(x: 0, y: 4))
+            aPath.addLine(to: CGPoint(x: -5, y: -2))
+            aPath.addLine(to: CGPoint(x: 5, y: -2))
+            aPath.closeSubpath()
+            arrow.path = aPath
+            arrow.fillColor = NSColor.white
+            arrow.strokeColor = NSColor.white
+            arrow.alpha = 0.9
+            addChild(arrow)
         }
 
         physicsBody?.isDynamic = false
@@ -93,6 +114,11 @@ class BlockNode: SKShapeNode {
 
         if type == .trampoline {
             physicsBody?.restitution = 1.4
+        }
+
+        if type == .catapult {
+            physicsBody?.categoryBitMask = PhysicsCategory.catapult
+            physicsBody?.contactTestBitMask = PhysicsCategory.ball
         }
     }
 
