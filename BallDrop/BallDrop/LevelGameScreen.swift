@@ -2,7 +2,8 @@ import SwiftUI
 import SpriteKit
 
 struct LevelGameScreen: View {
-    let level: Level
+    let level: Level?
+    let userLevel: UserLevel?
     @ObservedObject var progress: ProgressStore
     var onCompleted: () -> Void
     var onCancel: () -> Void
@@ -31,11 +32,28 @@ struct LevelGameScreen: View {
          onCompleted: @escaping () -> Void,
          onCancel: @escaping () -> Void) {
         self.level = level
+        self.userLevel = nil
         self.progress = progress
         self.onCompleted = onCompleted
         self.onCancel = onCancel
         self._ballsRemaining = State(initialValue: level.ballCount)
         self._blocksRemaining = State(initialValue: level.blockBudget)
+        let scene = GameScene(size: CGSize(width: 800, height: 700))
+        scene.scaleMode = .resizeFill
+        self._gameScene = State(initialValue: scene)
+    }
+
+    init(userLevel: UserLevel,
+         progress: ProgressStore,
+         onCompleted: @escaping () -> Void,
+         onCancel: @escaping () -> Void) {
+        self.level = nil
+        self.userLevel = userLevel
+        self.progress = progress
+        self.onCompleted = onCompleted
+        self.onCancel = onCancel
+        self._ballsRemaining = State(initialValue: userLevel.ballCount)
+        self._blocksRemaining = State(initialValue: userLevel.extraBudget)
         let scene = GameScene(size: CGSize(width: 800, height: 700))
         scene.scaleMode = .resizeFill
         self._gameScene = State(initialValue: scene)
@@ -84,17 +102,22 @@ struct LevelGameScreen: View {
             gameScene.onLevelCompleted = {
                 Task { @MainActor in
                     outcome = .won
-                    progress.markCompleted(level.id)
+                    let id = level?.id ?? userLevel?.id ?? ""
+                    if !id.isEmpty { progress.markCompleted(id) }
                 }
             }
             gameScene.onLevelFailed = {
                 Task { @MainActor in outcome = .lost }
             }
-            gameScene.startLevel(LevelConfig(
-                blockBudget: level.blockBudget,
-                ballCount: level.ballCount,
-                scoreTarget: level.scoreTarget
-            ))
+            if let lvl = level {
+                gameScene.startLevel(LevelConfig(
+                    blockBudget: lvl.blockBudget,
+                    ballCount: lvl.ballCount,
+                    scoreTarget: lvl.scoreTarget
+                ))
+            } else if let ul = userLevel {
+                gameScene.loadUserLevel(ul)
+            }
         }
         .onChange(of: isMuted) { _, newValue in
             gameScene.soundManager.isMuted = newValue
@@ -121,9 +144,9 @@ struct LevelGameScreen: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(level.tier.displayName) — \(level.name)")
+                Text(headerTitle)
                     .font(.system(size: 14, weight: .bold))
-                Text("Mål: \(level.scoreTarget)p")
+                Text(headerSubtitle)
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
@@ -257,7 +280,20 @@ struct LevelGameScreen: View {
     }
 
     private var orderedBlockTypes: [BlockType] {
-        BlockType.allCases.filter { level.blockBudget[$0] != nil }
+        let budget = level?.blockBudget ?? userLevel?.extraBudget ?? [:]
+        return BlockType.allCases.filter { budget[$0] != nil }
+    }
+
+    private var headerTitle: String {
+        if let l = level { return "\(l.tier.displayName) — \(l.name)" }
+        if let u = userLevel { return u.name }
+        return ""
+    }
+
+    private var headerSubtitle: String {
+        if let l = level { return "Mål: \(l.scoreTarget)p" }
+        if let u = userLevel { return "Mål: \(u.scoreZones.count) zoner" }
+        return ""
     }
 
     private func label(for type: BlockType) -> String {
@@ -323,10 +359,14 @@ struct LevelGameScreen: View {
 
     private func restartLevel() {
         outcome = nil
-        gameScene.startLevel(LevelConfig(
-            blockBudget: level.blockBudget,
-            ballCount: level.ballCount,
-            scoreTarget: level.scoreTarget
-        ))
+        if let lvl = level {
+            gameScene.startLevel(LevelConfig(
+                blockBudget: lvl.blockBudget,
+                ballCount: lvl.ballCount,
+                scoreTarget: lvl.scoreTarget
+            ))
+        } else if let ul = userLevel {
+            gameScene.loadUserLevel(ul)
+        }
     }
 }
