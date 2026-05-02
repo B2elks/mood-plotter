@@ -27,7 +27,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastSpawnTime: TimeInterval = 0
     private let maxBalls = 100
     var draggedNode: SKNode?
-    private var spawnPointNode: SpawnPoint!
+    var spawnPointNode: SpawnPoint!
     var score: Int = 0 {
         didSet { onScoreChanged?(score) }
     }

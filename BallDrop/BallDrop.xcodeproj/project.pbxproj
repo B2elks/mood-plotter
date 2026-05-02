@@ -23,6 +23,7 @@
 		63A42B9415F840F668F5425E /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */; };
 		6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */; };
 		77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A94ED2363F019BE3BBE2F12 /* GameScene.swift */; };
+		7EAE29E391489AE419AAFD22 /* LevelEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63E2A1EFCC4B377764B32DB /* LevelEditorScreen.swift */; };
 		8350D051A65C99668F794E9E /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
 		9BF9679A8D5B2453A56B7BE5 /* ScoreZone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30482F9AE8C88C70565B7FA0 /* ScoreZone.swift */; };
 		AB4236A1C51D8CABA4E32B08 /* UserLevels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB79F7F1A06077B4AC4499DF /* UserLevels.swift */; };
@@ -31,6 +32,7 @@
 		BF547F490BE0D8F955BE9774 /* LevelGameScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6D4E5523C5D3CEA48C3274 /* LevelGameScreen.swift */; };
 		CB4FF4BD661C6D65EBCB5E1A /* SpawnPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB617556EE87EAF666BD51D1 /* SpawnPoint.swift */; };
 		CBF53A98281500B3199480BC /* LevelSelectScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D302486BFA9326354AE08861 /* LevelSelectScreen.swift */; };
+		CE57F309DDF8BA1AA9191DEC /* LevelEditorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63E2A1EFCC4B377764B32DB /* LevelEditorScreen.swift */; };
 		CF334CF171AA17850F5A8B90 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */; };
 		D2CEEAC0BB74E6DA7743CA51 /* ProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */; };
 		DC5741F997DAE16F9479EF25 /* Levels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */; };
@@ -64,6 +66,7 @@
 		D7E59C7076708EF40A0764AB /* BallDropApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallDropApp.swift; sourceTree = "<group>"; };
 		DC97BDEB93C9C48B40D35F09 /* ProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStore.swift; sourceTree = "<group>"; };
 		EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreeDrawTool.swift; sourceTree = "<group>"; };
+		F63E2A1EFCC4B377764B32DB /* LevelEditorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LevelEditorScreen.swift; sourceTree = "<group>"; };
 		F7BEB2DD5DCF092109F104F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		F861223A753B23358D80ED57 /* SpriteKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpriteKitView.swift; sourceTree = "<group>"; };
 		FB79F7F1A06077B4AC4499DF /* UserLevels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLevels.swift; sourceTree = "<group>"; };
@@ -99,6 +102,7 @@
 				EA13402B7766EA32D4F36DE4 /* FreeDrawTool.swift */,
 				0A94ED2363F019BE3BBE2F12 /* GameScene.swift */,
 				0D71B84585C246BD0C6BAAD2 /* HomeScreen.swift */,
+				F63E2A1EFCC4B377764B32DB /* LevelEditorScreen.swift */,
 				1D6D4E5523C5D3CEA48C3274 /* LevelGameScreen.swift */,
 				7F2CC2A1BB32D4F6B87C4FA1 /* Levels.swift */,
 				D302486BFA9326354AE08861 /* LevelSelectScreen.swift */,
@@ -216,6 +220,7 @@
 				6A41BAF290BC4EC18FC3B100 /* FreeDrawTool.swift in Sources */,
 				DFFDBC9E6199D18B95C2D282 /* GameScene.swift in Sources */,
 				27CCC1981A75FDF49C61B0BA /* HomeScreen.swift in Sources */,
+				CE57F309DDF8BA1AA9191DEC /* LevelEditorScreen.swift in Sources */,
 				E1D592E12658554142E66540 /* LevelGameScreen.swift in Sources */,
 				CBF53A98281500B3199480BC /* LevelSelectScreen.swift in Sources */,
 				DC5741F997DAE16F9479EF25 /* Levels.swift in Sources */,
@@ -240,6 +245,7 @@
 				183E0EF856F8D17E827F620B /* FreeDrawTool.swift in Sources */,
 				77E8585941C5C79B8A24BE85 /* GameScene.swift in Sources */,
 				DD6EF10274947AC7F45C8768 /* HomeScreen.swift in Sources */,
+				7EAE29E391489AE419AAFD22 /* LevelEditorScreen.swift in Sources */,
 				BF547F490BE0D8F955BE9774 /* LevelGameScreen.swift in Sources */,
 				1C6D7E97ACD977B1B057A39E /* LevelSelectScreen.swift in Sources */,
 				DE1F8BE740620FBD194171A0 /* Levels.swift in Sources */,
