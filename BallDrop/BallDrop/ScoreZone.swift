@@ -2,7 +2,7 @@ import SpriteKit
 
 class ScoreZone: SKShapeNode {
 
-    enum Edge {
+    enum Edge: String, Codable, Hashable {
         case bottom, left, right
     }
 

@@ -1,6 +1,6 @@
 import SpriteKit
 
-enum BlockType: String, CaseIterable {
+enum BlockType: String, CaseIterable, Codable, Hashable {
     case horizontalRect
     case verticalRect
     case diagonal
