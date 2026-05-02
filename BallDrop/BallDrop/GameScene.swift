@@ -39,6 +39,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let soundManager = SoundManager()
 
     var levelConfig: LevelConfig?
+    var manualSpawnMode: Bool = false
     private var ballsRemaining: Int = 0
     private var blocksRemaining: [BlockType: Int] = [:]
 
@@ -103,7 +104,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         guard !isPaused_ else { return }
 
         if let cfg = levelConfig {
-            if ballsRemaining > 0 && currentTime - lastSpawnTime >= spawnRate {
+            if !manualSpawnMode && ballsRemaining > 0 && currentTime - lastSpawnTime >= spawnRate {
                 spawnBall()
                 ballsRemaining -= 1
                 onBallsRemainingChanged?(ballsRemaining)
@@ -224,6 +225,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func startLevel(_ config: LevelConfig) {
         levelConfig = config
+        manualSpawnMode = true
         ballsRemaining = config.ballCount
         blocksRemaining = config.blockBudget
         score = 0
@@ -234,6 +236,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spawnScoreZone()
         onBallsRemainingChanged?(ballsRemaining)
         onBlocksRemainingChanged?(blocksRemaining)
+    }
+
+    func launchBall() {
+        guard levelConfig != nil, ballsRemaining > 0 else { return }
+        spawnBall()
+        ballsRemaining -= 1
+        onBallsRemainingChanged?(ballsRemaining)
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
