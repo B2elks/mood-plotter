@@ -152,12 +152,6 @@ struct SidebarView: View {
                     }
                     .controlSize(.small)
 
-                    Button(action: { isMuted.toggle() }) {
-                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 12))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .controlSize(.small)
                 }
                 .padding(.horizontal)
             }

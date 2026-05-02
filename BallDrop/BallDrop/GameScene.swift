@@ -168,6 +168,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody?.mass = 0.1
         ball.physicsBody?.categoryBitMask = PhysicsCategory.ball
         ball.physicsBody?.contactTestBitMask = PhysicsCategory.scoreZone | PhysicsCategory.catapult | PhysicsCategory.block | PhysicsCategory.wall
+        ball.physicsBody?.collisionBitMask = PhysicsCategory.block | PhysicsCategory.wall | PhysicsCategory.catapult
 
         let dx = CGFloat.random(in: -0.3...0.3)
         ball.physicsBody?.applyImpulse(CGVector(dx: dx, dy: 0))
@@ -298,30 +299,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let bodyA = contact.bodyA
         let bodyB = contact.bodyB
 
-        // Ball ↔ wall: pure sound, no other physics effect.
+        // Ball ↔ wall: no-op (audio removed).
         if (bodyA.categoryBitMask == PhysicsCategory.ball && bodyB.categoryBitMask == PhysicsCategory.wall) ||
            (bodyA.categoryBitMask == PhysicsCategory.wall && bodyB.categoryBitMask == PhysicsCategory.ball) {
-            let ballNode = bodyA.categoryBitMask == PhysicsCategory.ball ? bodyA.node : bodyB.node
-            soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .wall)
             return
         }
 
-        // Ball ↔ block (incl. trampoline). Catapult bodies have .block|.catapult and are
-        // explicitly excluded so the catapult branch below handles them.
+        // Ball ↔ block (incl. trampoline) — physics handled by collision; no audio.
         let aIsBall = bodyA.categoryBitMask == PhysicsCategory.ball
         let aIsBlock = (bodyA.categoryBitMask & PhysicsCategory.block) != 0 && (bodyA.categoryBitMask & PhysicsCategory.catapult) == 0
         let bIsBall = bodyB.categoryBitMask == PhysicsCategory.ball
         let bIsBlock = (bodyB.categoryBitMask & PhysicsCategory.block) != 0 && (bodyB.categoryBitMask & PhysicsCategory.catapult) == 0
         if (aIsBall && bIsBlock) || (aIsBlock && bIsBall) {
-            let ballNode = aIsBall ? bodyA.node : bodyB.node
-            let blockNode = aIsBall ? bodyB.node : bodyA.node
-            let surface: SoundManager.Surface
-            if let bn = blockNode as? BlockNode, bn.blockType == .trampoline {
-                surface = .trampoline
-            } else {
-                surface = .block
-            }
-            soundManager.play(colorIndex: colorIndex(of: ballNode), surface: surface)
             return
         }
 
@@ -329,20 +318,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
            ((bodyA.categoryBitMask & PhysicsCategory.catapult) != 0 && bodyB.categoryBitMask == PhysicsCategory.ball) {
             let ballPB = bodyA.categoryBitMask == PhysicsCategory.ball ? bodyA : bodyB
             let catPB = ballPB === bodyA ? bodyB : bodyA
-            guard let ballNode = ballPB.node, let catNode = catPB.node else { return }
+            guard let catNode = catPB.node else { return }
 
             let theta = catNode.zRotation
             let impulse: CGFloat = 1.2
             let dirX = -sin(theta)
             let dirY = cos(theta)
-            ballNode.physicsBody?.applyImpulse(CGVector(dx: dirX * impulse, dy: dirY * impulse))
+            ballPB.applyImpulse(CGVector(dx: dirX * impulse, dy: dirY * impulse))
 
             let flash = SKAction.sequence([
                 SKAction.scale(to: 1.15, duration: 0.08),
                 SKAction.scale(to: 1.0, duration: 0.08),
             ])
             catNode.run(flash)
-            soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .catapult)
             return
         }
 
@@ -388,7 +376,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         zoneNode.physicsBody = nil
         zoneNode.run(zoneFlash)
 
-        soundManager.play(colorIndex: colorIndex(of: ballNode), surface: .scoreZone)
         score += 1
         if let cfg = levelConfig, score >= cfg.scoreTarget {
             onLevelCompleted?()
