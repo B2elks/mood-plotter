@@ -7,9 +7,12 @@ struct SidebarView: View {
     @Binding var isPaused: Bool
     @Binding var isMuted: Bool
     @Binding var score: Int
+    @Binding var manualMode: Bool
     var onPlaceBlock: (BlockType) -> Void
     var onClearBlocks: () -> Void
     var onResetScore: () -> Void
+    var onLaunchBall: () -> Void
+    var onDragBlock: (BlockType, CGPoint) -> Void
     var onHome: (() -> Void)? = nil
 
     var body: some View {
@@ -39,23 +42,7 @@ struct SidebarView: View {
                     .padding(.horizontal)
 
                 ForEach(Array(zip(BlockType.allCases, ["Horisontell", "Vertikal", "Diagonal", "Cirkel", "Triangel", "Studsmatta", "Katapult"])), id: \.0.rawValue) { type, label in
-                    Button(action: { onPlaceBlock(type) }) {
-                        HStack(spacing: 10) {
-                            blockIcon(type)
-                                .frame(width: 28, height: 28)
-                            Text(label)
-                                .font(.system(size: 13))
-                            Spacer()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.gray.opacity(0.08))
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 8)
+                    blockListRow(type: type, label: label)
                 }
 
                 Button(action: { selectedTool = selectedTool == "draw" ? "pointer" : "draw" }) {
@@ -110,12 +97,37 @@ struct SidebarView: View {
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
 
-                HStack {
-                    Text("Hastighet")
-                        .font(.system(size: 12))
-                    Slider(value: $spawnRate, in: 0.2...5.0, step: 0.1)
+                Picker("Läge", selection: $manualMode) {
+                    Text("Auto").tag(false)
+                    Text("Manuell").tag(true)
                 }
+                .pickerStyle(.segmented)
                 .padding(.horizontal)
+
+                if manualMode {
+                    Button(action: onLaunchBall) {
+                        HStack {
+                            Image(systemName: "arrow.up.forward.circle.fill")
+                                .font(.system(size: 18))
+                            Text("Skjut iväg!")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+                } else {
+                    HStack {
+                        Text("Hastighet")
+                            .font(.system(size: 12))
+                        Slider(value: $spawnRate, in: 0.2...5.0, step: 0.1)
+                    }
+                    .padding(.horizontal)
+                }
 
                 HStack {
                     Text("Storlek")
@@ -172,4 +184,50 @@ struct SidebarView: View {
         #endif
     }
 
+    @ViewBuilder
+    private func blockListRow(type: BlockType, label: String) -> some View {
+        if manualMode {
+            HStack(spacing: 10) {
+                blockIcon(type)
+                    .frame(width: 28, height: 28)
+                Text(label)
+                    .font(.system(size: 13))
+                Spacer()
+                Image(systemName: "hand.draw")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.gray.opacity(0.08))
+            )
+            .padding(.horizontal, 8)
+            .gesture(
+                DragGesture(coordinateSpace: .global)
+                    .onEnded { value in
+                        onDragBlock(type, value.location)
+                    }
+            )
+        } else {
+            Button(action: { onPlaceBlock(type) }) {
+                HStack(spacing: 10) {
+                    blockIcon(type)
+                        .frame(width: 28, height: 28)
+                    Text(label)
+                        .font(.system(size: 13))
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.08))
+                )
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 8)
+        }
+    }
 }

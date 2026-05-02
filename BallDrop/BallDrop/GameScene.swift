@@ -239,10 +239,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func launchBall() {
-        guard levelConfig != nil, ballsRemaining > 0 else { return }
-        spawnBall()
-        ballsRemaining -= 1
-        onBallsRemainingChanged?(ballsRemaining)
+        if levelConfig != nil {
+            guard ballsRemaining > 0 else { return }
+            spawnBall()
+            ballsRemaining -= 1
+            onBallsRemainingChanged?(ballsRemaining)
+        } else {
+            spawnBall()
+        }
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
