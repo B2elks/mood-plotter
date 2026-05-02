@@ -13,10 +13,17 @@ struct LevelGameScreen: View {
     @State private var outcome: Outcome? = nil
     @State private var isMuted: Bool = false
     @State private var gameScene: GameScene
+    @State private var dragState: DragState? = nil
+    @State private var sceneFrame: CGRect = .zero
 
     enum Outcome {
         case won
         case lost
+    }
+
+    struct DragState {
+        let type: BlockType
+        var globalLocation: CGPoint
     }
 
     init(level: Level,
@@ -41,14 +48,20 @@ struct LevelGameScreen: View {
                 .background(Color(white: 0.95))
 
             ZStack(alignment: .topTrailing) {
-                #if os(iOS)
-                SpriteKitView(scene: gameScene)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(gameBackground)
-                #else
-                SpriteView(scene: gameScene, options: [.allowsTransparency])
-                    .background(gameBackground)
-                #endif
+                GeometryReader { proxy in
+                    #if os(iOS)
+                    SpriteKitView(scene: gameScene)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(gameBackground)
+                        .onAppear { sceneFrame = proxy.frame(in: .global) }
+                        .onChange(of: proxy.frame(in: .global)) { _, new in sceneFrame = new }
+                    #else
+                    SpriteView(scene: gameScene, options: [.allowsTransparency])
+                        .background(gameBackground)
+                        .onAppear { sceneFrame = proxy.frame(in: .global) }
+                        .onChange(of: proxy.frame(in: .global)) { _, new in sceneFrame = new }
+                    #endif
+                }
 
                 Text("\(score)")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
@@ -86,6 +99,7 @@ struct LevelGameScreen: View {
         .onChange(of: isMuted) { _, newValue in
             gameScene.soundManager.isMuted = newValue
         }
+        .overlay { ghostOverlay }
         .overlay {
             if let outcome = outcome {
                 outcomeModal(outcome)
@@ -136,35 +150,33 @@ struct LevelGameScreen: View {
             }
             .padding(.horizontal)
 
+            Button(action: { gameScene.launchBall() }) {
+                HStack {
+                    Image(systemName: "arrow.up.forward.circle.fill")
+                        .font(.system(size: 20))
+                    Text("Skjut iväg! (\(ballsRemaining) kvar)")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(ballsRemaining > 0 ? Color.green : Color.gray.opacity(0.3))
+                .foregroundColor(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+            .disabled(ballsRemaining == 0)
+            .padding(.horizontal)
+
             Divider()
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("BLOCK")
+                Text("BLOCK — DRA UT")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
 
                 ForEach(orderedBlockTypes, id: \.rawValue) { type in
-                    let count = blocksRemaining[type] ?? 0
-                    Button(action: { placeBlock(type) }) {
-                        HStack {
-                            Text(label(for: type))
-                                .font(.system(size: 13))
-                            Spacer()
-                            Text("\(count)")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(count > 0 ? .blue : .secondary)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.gray.opacity(count > 0 ? 0.08 : 0.04))
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 8)
-                    .disabled(count == 0)
+                    blockRow(type)
                 }
             }
 
@@ -185,6 +197,65 @@ struct LevelGameScreen: View {
         }
     }
 
+    @ViewBuilder
+    private func blockRow(_ type: BlockType) -> some View {
+        let count = blocksRemaining[type] ?? 0
+        let enabled = count > 0
+        HStack(spacing: 10) {
+            blockIcon(type)
+                .frame(width: 28, height: 28)
+            Text(label(for: type))
+                .font(.system(size: 13))
+            Spacer()
+            Text("\(count)")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(enabled ? .blue : .secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white)
+        )
+        .opacity(enabled ? 1.0 : 0.4)
+        .padding(.horizontal, 8)
+        .gesture(
+            DragGesture(coordinateSpace: .global)
+                .onChanged { value in
+                    guard enabled else { return }
+                    dragState = DragState(type: type, globalLocation: value.location)
+                }
+                .onEnded { value in
+                    guard enabled else { return }
+                    handleDrop(at: value.location, type: type)
+                    dragState = nil
+                }
+        )
+    }
+
+    private func handleDrop(at globalLocation: CGPoint, type: BlockType) {
+        guard sceneFrame.contains(globalLocation) else { return }
+        guard (blocksRemaining[type] ?? 0) > 0 else { return }
+        let viewLoc = CGPoint(
+            x: globalLocation.x - sceneFrame.origin.x,
+            y: globalLocation.y - sceneFrame.origin.y
+        )
+        let sceneLoc = gameScene.convertPoint(fromView: viewLoc)
+        gameScene.addBlock(type: type, at: sceneLoc)
+    }
+
+    @ViewBuilder
+    private var ghostOverlay: some View {
+        if let drag = dragState {
+            blockIcon(drag.type)
+                .scaleEffect(2.5)
+                .opacity(0.7)
+                .position(x: drag.globalLocation.x, y: drag.globalLocation.y)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        }
+    }
+
     private var orderedBlockTypes: [BlockType] {
         BlockType.allCases.filter { level.blockBudget[$0] != nil }
     }
@@ -199,11 +270,6 @@ struct LevelGameScreen: View {
         case .trampoline:     return "Studsmatta"
         case .catapult:       return "Katapult"
         }
-    }
-
-    private func placeBlock(_ type: BlockType) {
-        gameScene.addBlock(type: type,
-            at: CGPoint(x: gameScene.size.width / 2, y: gameScene.size.height / 2))
     }
 
     @ViewBuilder
