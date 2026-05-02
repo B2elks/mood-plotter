@@ -40,6 +40,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var levelConfig: LevelConfig?
     var manualSpawnMode: Bool = false
+    var editorMode: Bool = false
+    var hasCustomLayout: Bool = false
+    private var customScoreZones: [ScoreZone] = []
     private var ballsRemaining: Int = 0
     private var blocksRemaining: [BlockType: Int] = [:]
 
@@ -102,6 +105,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     override func update(_ currentTime: TimeInterval) {
         guard !isPaused_ else { return }
+        if editorMode { return }
 
         if let cfg = levelConfig {
             if !manualSpawnMode && ballsRemaining > 0 && currentTime - lastSpawnTime >= spawnRate {
@@ -191,6 +195,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func spawnScoreZone() {
+        if hasCustomLayout { return }
         let margin = ScoreZone.zoneLength / 2 + 10
         guard size.width > margin * 2, size.height > margin * 2 else { return }
 
@@ -247,6 +252,46 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else {
             spawnBall()
         }
+    }
+
+    func loadUserLevel(_ level: UserLevel) {
+        hasCustomLayout = true
+        manualSpawnMode = true
+        editorMode = false
+        levelConfig = LevelConfig(
+            blockBudget: level.extraBudget,
+            ballCount: level.ballCount,
+            scoreTarget: level.scoreZones.count
+        )
+        ballsRemaining = level.ballCount
+        blocksRemaining = level.extraBudget
+        score = 0
+
+        clearAllBlocks()
+        children.filter { $0.name == "ball" }.forEach { $0.removeFromParent() }
+        scoreZone?.removeFromParent()
+        scoreZone = nil
+        customScoreZones.forEach { $0.removeFromParent() }
+        customScoreZones.removeAll()
+
+        spawnPointNode?.position = level.spawnPosition
+
+        for pb in level.placedBlocks {
+            let block = BlockNode(type: pb.type)
+            block.position = pb.position
+            block.zRotation = pb.zRotation
+            addChild(block)
+        }
+
+        for pz in level.scoreZones {
+            let zone = ScoreZone(edge: pz.edge)
+            zone.position = pz.position
+            customScoreZones.append(zone)
+            addChild(zone)
+        }
+
+        onBallsRemainingChanged?(ballsRemaining)
+        onBlocksRemainingChanged?(blocksRemaining)
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
@@ -315,8 +360,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         guard let ballNode = ballBody?.node, let zoneNode = zoneBody?.node else { return }
-        guard let currentZone = scoreZone, zoneNode === currentZone else { return }
-        scoreZone = nil
+        if hasCustomLayout {
+            guard let zone = zoneNode as? ScoreZone, customScoreZones.contains(where: { $0 === zone }) else { return }
+            customScoreZones.removeAll { $0 === zone }
+        } else {
+            guard let currentZone = scoreZone, zoneNode === currentZone else { return }
+            scoreZone = nil
+        }
 
         let flash = SKAction.sequence([
             SKAction.group([
@@ -344,7 +394,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             onLevelCompleted?()
             levelConfig = nil
         }
-        spawnScoreZone()
+        if !hasCustomLayout {
+            spawnScoreZone()
+        }
     }
 
     private func colorIndex(of node: SKNode?) -> Int {
