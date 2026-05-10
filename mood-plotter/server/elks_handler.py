@@ -39,3 +39,43 @@ def verify_signature(api_password: str, callback_url: str, signature: str) -> bo
         ).digest()
     ).decode()
     return hmac.compare_digest(expected, signature)
+
+
+import json
+import logging
+
+import aiohttp
+
+log = logging.getLogger(__name__)
+
+
+async def initiate_call(
+    api_username: str,
+    api_password: str,
+    from_number: str,
+    to_number: str,
+    voice_start_url: str,
+    whenhangup_url: str,
+) -> str | None:
+    """Initiera utgående samtal. Returnerar elks call_id eller None."""
+    payload = {
+        "from": from_number,
+        "to": to_number,
+        "voice_start": voice_start_url,
+        "whenhangup": whenhangup_url,
+    }
+    auth = aiohttp.BasicAuth(api_username, api_password)
+    try:
+        async with aiohttp.ClientSession(auth=auth) as session:
+            async with session.post(
+                "https://api.46elks.com/a1/calls", data=payload
+            ) as resp:
+                if resp.status == 200:
+                    result = await resp.json()
+                    return result.get("id")
+                body = await resp.text()
+                log.error("46elks API-fel %s: %s", resp.status, body)
+                return None
+    except Exception as e:
+        log.exception("Fel vid utgående samtal: %s", e)
+        return None
