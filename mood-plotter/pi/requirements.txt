@@ -1,0 +1,6 @@
+websocket-client==1.8.0
+gpiozero==2.0.1
+RPi.GPIO==0.7.1
+requests==2.32.0
+pyaxidraw==3.9.1
+python-dotenv==1.0.1
