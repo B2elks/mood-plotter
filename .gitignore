@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+server/audio/ack_*.mp3
+server/cooldown.db
+*.swp
