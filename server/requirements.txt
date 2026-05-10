@@ -2,10 +2,10 @@ aiohttp==3.9.5
 openai==1.30.0
 elevenlabs==1.2.2
 vpype==1.14
-vpype-vectrace==0.2.0
+vpype-vectrace==0.1.2
 Pillow==10.3.0
 python-dotenv==1.0.1
 pytest==8.2.0
 pytest-asyncio==0.23.7
 pytest-mock==3.14.0
-aiohttp-pytest==0.1.0
+pytest-aiohttp==1.0.5
