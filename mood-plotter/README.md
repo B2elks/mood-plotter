@@ -8,6 +8,8 @@ PIR-sensor → samtal till mobil → butler frågar "hur mår herrn?" → svar t
 
 Se [`docs/superpowers/specs/2026-05-09-pir-mood-plotter-design.md`](../docs/superpowers/specs/2026-05-09-pir-mood-plotter-design.md) för fullständig design.
 
+**Status:** Implementerat (39/39 tester gröna), inte deployat. Se [`TODO.md`](TODO.md) för kvarvarande punkter, [`PUBLISH.md`](PUBLISH.md) för hur projektet flyttas till eget repo (b2elk/mood-plotter).
+
 ## Setup — server (skyttberg.nu)
 
 ```bash
