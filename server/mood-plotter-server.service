@@ -1,0 +1,16 @@
+[Unit]
+Description=Mood Plotter Server
+After=network.target
+
+[Service]
+Type=simple
+User=kumamonwithme
+WorkingDirectory=/home/kumamonwithme/mood-plotter/server
+ExecStart=/home/kumamonwithme/mood-plotter/.venv/bin/python server.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
