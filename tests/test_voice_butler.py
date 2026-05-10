@@ -1,7 +1,7 @@
 import json
 from unittest.mock import patch, MagicMock
 
-from voice_butler import analyze_response, ButlerResult
+from voice_butler import analyze_response, ButlerResult, transcribe_audio
 
 
 def _mock_chat_completion(content: str):
@@ -49,3 +49,26 @@ def test_analyze_response_uses_fallback_on_invalid_json():
 
     assert result.image_prompt
     assert result.butler_ack
+
+
+def test_transcribe_audio_returns_text(tmp_path):
+    wav_path = tmp_path / "rec.wav"
+    wav_path.write_bytes(b"fake-wav")
+
+    fake_response = MagicMock()
+    fake_response.text = "Trött och lite stressad"
+
+    with patch("voice_butler._call_whisper", return_value=fake_response):
+        text = transcribe_audio(wav_path, api_key="k")
+
+    assert text == "Trött och lite stressad"
+
+
+def test_transcribe_audio_returns_empty_on_error(tmp_path):
+    wav_path = tmp_path / "rec.wav"
+    wav_path.write_bytes(b"fake-wav")
+
+    with patch("voice_butler._call_whisper", side_effect=RuntimeError("api down")):
+        text = transcribe_audio(wav_path, api_key="k")
+
+    assert text == ""

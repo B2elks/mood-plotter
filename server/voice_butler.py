@@ -2,6 +2,7 @@
 import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 from openai import OpenAI
 
@@ -57,3 +58,23 @@ def analyze_response(transcribed_text: str, api_key: str) -> ButlerResult:
     except Exception as e:
         log.error("LLM-fel, använder fallback: %s", e)
         return ButlerResult(*FALLBACK)
+
+
+def _call_whisper(audio_file, api_key: str):
+    client = OpenAI(api_key=api_key)
+    return client.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file,
+        language="sv",
+    )
+
+
+def transcribe_audio(audio_path: Path, api_key: str) -> str:
+    """Transkribera en wav/mp3-fil. Returnerar tom sträng vid fel."""
+    try:
+        with open(audio_path, "rb") as f:
+            response = _call_whisper(f, api_key)
+        return response.text.strip()
+    except Exception as e:
+        log.error("Whisper-fel: %s", e)
+        return ""
