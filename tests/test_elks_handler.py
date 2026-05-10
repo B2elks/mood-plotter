@@ -51,3 +51,55 @@ def test_verify_signature_accepts_valid_signature():
 
 def test_verify_signature_rejects_invalid_signature():
     assert verify_signature("test-pass", "https://example.com/cb", "wrongsig") is False
+
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from elks_handler import initiate_call
+
+
+@pytest.mark.asyncio
+async def test_initiate_call_posts_to_46elks(mocker):
+    mock_post = MagicMock()
+    mock_post.return_value.__aenter__ = AsyncMock()
+    mock_post.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_post.return_value.__aenter__.return_value.status = 200
+    mock_post.return_value.__aenter__.return_value.json = AsyncMock(
+        return_value={"id": "call-123", "state": "ongoing"}
+    )
+
+    with patch("aiohttp.ClientSession.post", mock_post):
+        result = await initiate_call(
+            api_username="u",
+            api_password="p",
+            from_number="+46111",
+            to_number="+46222",
+            voice_start_url="https://x/answer",
+            whenhangup_url="https://x/hangup",
+        )
+
+    assert result == "call-123"
+
+
+@pytest.mark.asyncio
+async def test_initiate_call_returns_none_on_error(mocker):
+    mock_post = MagicMock()
+    mock_post.return_value.__aenter__ = AsyncMock()
+    mock_post.return_value.__aexit__ = AsyncMock(return_value=None)
+    mock_post.return_value.__aenter__.return_value.status = 400
+    mock_post.return_value.__aenter__.return_value.text = AsyncMock(
+        return_value="bad request"
+    )
+
+    with patch("aiohttp.ClientSession.post", mock_post):
+        result = await initiate_call(
+            api_username="u",
+            api_password="p",
+            from_number="+46111",
+            to_number="+46222",
+            voice_start_url="https://x/answer",
+            whenhangup_url="https://x/hangup",
+        )
+
+    assert result is None
