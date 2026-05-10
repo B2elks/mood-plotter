@@ -1,0 +1,14 @@
+[Unit]
+Description=Mood Plotter PIR Watcher
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/mood-plotter/pi
+ExecStart=/home/pi/mood-plotter/.venv/bin/python pir_watcher.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

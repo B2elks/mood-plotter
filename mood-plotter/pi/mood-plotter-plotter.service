@@ -1,0 +1,14 @@
+[Unit]
+Description=Mood Plotter Client (AxiDraw)
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/mood-plotter/pi
+ExecStart=/home/pi/mood-plotter/.venv/bin/python plotter_client.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
