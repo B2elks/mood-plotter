@@ -70,6 +70,9 @@ async def trigger_handler(request):
 
 async def elks_answer_handler(request):
     call_id = request.query.get("call_id", "")
+    # Update state so a hangup-after-answer doesn't release the cooldown.
+    if call_id in request.app["pending_calls"]:
+        request.app["pending_calls"][call_id]["state"] = "answered"
     play_url = tts_cache.pick_question_url(
         audio_dir=config.AUDIO_DIR,
         public_base_url=config.SERVER_PUBLIC_URL,
@@ -89,14 +92,11 @@ async def elks_recording_handler(request):
     recording_url = data.get("recordurl") or data.get("url", "")
     log.info("call_id=%s inspelning klar: %s", call_id, recording_url)
 
-    asyncio.create_task(_process_recording(request.app, call_id, recording_url))
-
-    fallback_url = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
-    return web.json_response(elks_handler.build_record_response(fallback_url))
-
-
-async def _process_recording(app, call_id: str, recording_url: str):
-    """Bakgrundstask: hamta inspelning, transkribera, generera ack + bild."""
+    # Synchronously: download recording, transcribe, analyze, generate ack MP3.
+    # This blocks the 46elks recording-callback for ~3-6s, but it tolerates that
+    # and it's the only way to return the personalized ack URL.
+    ack_url = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
+    image_prompt = None
     try:
         import aiohttp as _aiohttp
 
@@ -115,8 +115,9 @@ async def _process_recording(app, call_id: str, recording_url: str):
             result.image_prompt[:60],
             result.butler_ack[:60],
         )
+        image_prompt = result.image_prompt
 
-        tts_live.generate_ack_mp3(
+        ack_url = tts_live.generate_ack_mp3(
             text=result.butler_ack,
             call_id=call_id,
             audio_dir=config.AUDIO_DIR,
@@ -125,16 +126,25 @@ async def _process_recording(app, call_id: str, recording_url: str):
             api_key=config.ELEVENLABS_API_KEY,
         )
 
-        svg = image_pipeline.generate_svg(result.image_prompt, config.OPENAI_API_KEY)
+        wav_path.unlink(missing_ok=True)
+    except Exception as e:
+        log.exception("call_id=%s fel i synchronous pipeline: %s", call_id, e)
+
+    # Background: image generation + plotter dispatch (slow, fire-and-forget).
+    if image_prompt:
+        asyncio.create_task(_generate_and_plot(request.app, call_id, image_prompt))
+
+    return web.json_response(elks_handler.build_record_response(ack_url))
+
+
+async def _generate_and_plot(app, call_id: str, image_prompt: str):
+    """Bakgrundstask: DALL.E -> vpype -> skicka SVG till plotter."""
+    try:
+        svg = image_pipeline.generate_svg(image_prompt, config.OPENAI_API_KEY)
         sent = await app["ws_dispatcher"].send_svg(svg)
         log.info("call_id=%s SVG skickad till plotter: %s", call_id, sent)
     except Exception as e:
-        log.exception("call_id=%s fel i _process_recording: %s", call_id, e)
-    finally:
-        try:
-            (config.AUDIO_DIR / f"rec_{call_id}.wav").unlink(missing_ok=True)
-        except Exception:
-            pass
+        log.exception("call_id=%s fel i _generate_and_plot: %s", call_id, e)
 
 
 async def elks_hangup_handler(request):

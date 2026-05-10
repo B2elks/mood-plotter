@@ -84,3 +84,64 @@ async def test_audio_404_for_missing_file(client):
 async def test_audio_blocks_path_traversal(client):
     resp = await client.get("/audio/../config.py")
     assert resp.status in (400, 404)
+
+
+class _FakeResp:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *a):
+        return False
+
+    async def read(self):
+        return b"fake-wav"
+
+
+class _FakeSession:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *a):
+        return False
+
+    def get(self, url):
+        return _FakeResp()
+
+
+@pytest.mark.asyncio
+async def test_elks_recording_returns_personalized_ack_url(client, monkeypatch):
+    """Regression: recording response must point at ack_<call_id>.mp3, not fallback."""
+    from voice_butler import ButlerResult
+
+    monkeypatch.setattr(
+        "voice_butler.transcribe_audio",
+        lambda path, api_key: "trött",
+    )
+    monkeypatch.setattr(
+        "voice_butler.analyze_response",
+        lambda text, api_key: ButlerResult(
+            image_prompt="a peaceful watercolor",
+            butler_ack="Förträffligt min herre",
+        ),
+    )
+    monkeypatch.setattr(
+        "tts_live.generate_ack_mp3",
+        lambda text, call_id, audio_dir, public_base_url, voice_id, api_key: (
+            f"{public_base_url}/audio/ack_{call_id}.mp3"
+        ),
+    )
+    monkeypatch.setattr(
+        "image_pipeline.generate_svg",
+        lambda prompt, api_key: "<svg/>",
+    )
+    # Avoid real HTTP fetch of the recording URL.
+    monkeypatch.setattr("aiohttp.ClientSession", lambda: _FakeSession())
+
+    resp = await client.post(
+        "/elks/recording?call_id=abc",
+        data={"recordurl": "https://example.com/r.wav"},
+    )
+    body = await resp.json()
+    assert "ack_abc.mp3" in body["play"], (
+        f"Expected personalized ack URL but got {body['play']}"
+    )
