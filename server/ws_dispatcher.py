@@ -32,10 +32,21 @@ class WSDispatcher:
         return None
 
     async def send_svg(self, svg: str) -> bool:
-        ws = self.get_ready_client()
-        if ws is None:
-            log.warning("Ingen ready-klient — SVG kastas")
-            return False
-        await ws.send_json({"method": "plot", "svg": svg})
-        self.mark_busy(ws)
-        return True
+        """Skicka SVG till första ready-klienten. Returnerar True om någon fick den.
+
+        Vid send-fel (t.ex. död WebSocket): unregistrera klienten och försök
+        nästa ready. Förhindrar att en client fastnar i busy-state om sockeln
+        dör mellan mark_busy och mark_ready.
+        """
+        while True:
+            ws = self.get_ready_client()
+            if ws is None:
+                log.warning("Ingen ready-klient — SVG kastas")
+                return False
+            try:
+                await ws.send_json({"method": "plot", "svg": svg})
+                self.mark_busy(ws)
+                return True
+            except Exception as e:
+                log.warning("Send-fel till klient — unregistrerar: %s", e)
+                self.unregister(ws)
