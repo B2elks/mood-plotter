@@ -4,25 +4,35 @@ import hashlib
 import hmac
 
 
-def build_answer_response(play_url: str, record_callback: str) -> dict:
-    """Svar på voice_start: spela frågan, spela in svaret."""
+def build_answer_response(play_url: str, after_play_url: str) -> dict:
+    """Svar pa voice_start: spela fragan. 'next' ar URL-strang till nasta action.
+
+    46elks kraver att 'next' ar en URL som returnerar nasta JSON-action,
+    INTE ett nastlat action-objekt.
+    """
     return {
         "play": play_url,
-        "next": {
-            "record": {
-                "timeout": 4,
-                "maxlength": 8,
-                "callbackurl": record_callback,
-            }
-        },
+        "next": after_play_url,
+    }
+
+
+def build_record_action(record_callback: str) -> dict:
+    """Svar efter att fragan spelats: be 46elks spela in svaret.
+
+    record-action med URL-strang som varde. Inga inline-parametrar fungerar
+    enligt 46elks-API:t -- om man behover andra timeout/maxlength satter
+    man dem som querystring-parametrar pa callback-URL eller skickar bara
+    URL:en och anvander defaults.
+    """
+    return {
+        "record": record_callback,
     }
 
 
 def build_record_response(play_url: str) -> dict:
-    """Svar på recording-callback: spela ack, lägg på."""
+    """Svar pa recording-callback: spela ack-fras, sen lagg pa automatiskt."""
     return {
         "play": play_url,
-        "next": {"hangup": ""},
     }
 
 

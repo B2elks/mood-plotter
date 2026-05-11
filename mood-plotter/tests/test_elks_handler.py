@@ -1,34 +1,31 @@
 from elks_handler import (
     build_answer_response,
+    build_record_action,
     build_record_response,
     build_hangup_response,
     verify_signature,
 )
 
 
-def test_build_answer_response_returns_play_with_next_record():
+def test_build_answer_response_returns_play_with_next_url():
     resp = build_answer_response(
         play_url="https://example.com/q.mp3",
-        record_callback="https://example.com/recording",
+        after_play_url="https://example.com/after_play",
     )
     assert resp == {
         "play": "https://example.com/q.mp3",
-        "next": {
-            "record": {
-                "timeout": 4,
-                "maxlength": 8,
-                "callbackurl": "https://example.com/recording",
-            }
-        },
+        "next": "https://example.com/after_play",
     }
 
 
-def test_build_record_response_returns_play_then_hangup():
+def test_build_record_action_returns_record_url():
+    resp = build_record_action(record_callback="https://example.com/recording")
+    assert resp == {"record": "https://example.com/recording"}
+
+
+def test_build_record_response_returns_play_only():
     resp = build_record_response(play_url="https://example.com/ack.mp3")
-    assert resp == {
-        "play": "https://example.com/ack.mp3",
-        "next": {"hangup": ""},
-    }
+    assert resp == {"play": "https://example.com/ack.mp3"}
 
 
 def test_build_hangup_response_is_empty_dict():

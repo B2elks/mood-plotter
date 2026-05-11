@@ -60,12 +60,22 @@ async def test_trigger_returns_429_on_cooldown(client):
 
 
 @pytest.mark.asyncio
-async def test_elks_answer_returns_play_record_action(client):
-    resp = await client.get("/elks/answer?callid=abc")
+async def test_elks_answer_returns_play_with_next_url(client):
+    resp = await client.get("/elks/answer?call_id=abc")
     body = await resp.json()
     assert "play" in body
-    assert "next" in body
-    assert "record" in body["next"]
+    assert body["next"].startswith("http")
+    assert "after_play" in body["next"]
+    assert "call_id=abc" in body["next"]
+
+
+@pytest.mark.asyncio
+async def test_elks_after_play_returns_record_url(client):
+    resp = await client.get("/elks/after_play?call_id=abc")
+    body = await resp.json()
+    assert body["record"].startswith("http")
+    assert "recording" in body["record"]
+    assert "call_id=abc" in body["record"]
 
 
 @pytest.mark.asyncio
