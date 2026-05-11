@@ -48,11 +48,17 @@ def png_to_svg(png_bytes: bytes) -> str:
         return svg_path.read_text()
 
 
-def generate_svg(prompt: str, api_key: str) -> str:
-    """Full pipeline: prompt -> DALL-E -> vpype -> SVG-strang."""
+def generate_png(prompt: str, api_key: str) -> bytes:
+    """Hamta bara PNG-bytes fran DALL-E. Publik wrapper kring _call_dalle."""
     log.info("Genererar bild for prompt: %s", prompt[:80])
     png = _call_dalle(prompt, api_key)
     log.info("DALL-E PNG mottagen, %d bytes", len(png))
+    return png
+
+
+def generate_svg(prompt: str, api_key: str) -> str:
+    """Full pipeline: prompt -> DALL-E -> vpype -> SVG-strang."""
+    png = generate_png(prompt, api_key)
     svg = png_to_svg(png)
     log.info("SVG genererad, %d tecken", len(svg))
     return svg

@@ -13,8 +13,10 @@ import server
 @pytest.fixture
 async def client(tmp_path, monkeypatch):
     monkeypatch.setattr("config.AUDIO_DIR", tmp_path / "audio")
+    monkeypatch.setattr("config.CARDS_DIR", tmp_path / "cards")
     monkeypatch.setattr("config.COOLDOWN_DB", tmp_path / "cd.db")
     monkeypatch.setattr("config.PI_TOKEN", "test-token")
+    monkeypatch.setattr("config.ADMIN_PASSWORD", "admin-pass")
     monkeypatch.setattr("config.DRY_RUN", True)
     (tmp_path / "audio").mkdir()
     (tmp_path / "audio" / "q_01.mp3").write_bytes(b"x")
@@ -145,3 +147,105 @@ async def test_elks_recording_returns_personalized_ack_url(client, monkeypatch):
     assert "ack_abc.mp3" in body["play"], (
         f"Expected personalized ack URL but got {body['play']}"
     )
+
+
+# Gallery / admin / cards routes (post-server-only-mode addition)
+
+@pytest.mark.asyncio
+async def test_gallery_renders_when_empty(client):
+    resp = await client.get("/")
+    assert resp.status == 200
+    body = await resp.text()
+    assert "STÄMNINGS-MASKINEN" in body
+    assert "Inga kort har skapats ännu" in body
+
+
+@pytest.mark.asyncio
+async def test_gallery_renders_card(client, tmp_path):
+    import card_store
+    card_store.save_card(
+        cards_dir=tmp_path / "cards",
+        call_id="g1",
+        png_bytes=b"PNG",
+        svg_text="<svg/>",
+        transcription="hemligt",
+        image_prompt="hemligt",
+        butler_ack="hemligt",
+    )
+    resp = await client.get("/")
+    body = await resp.text()
+    assert "_g1.png" in body
+    # Public gallery must NOT leak transcription/prompt/ack
+    assert "hemligt" not in body
+
+
+@pytest.mark.asyncio
+async def test_cards_serves_png(client, tmp_path):
+    (tmp_path / "cards").mkdir(exist_ok=True)
+    (tmp_path / "cards" / "foo.png").write_bytes(b"PNGDATA")
+    resp = await client.get("/cards/foo.png")
+    assert resp.status == 200
+    assert await resp.read() == b"PNGDATA"
+
+
+@pytest.mark.asyncio
+async def test_cards_404_for_missing(client):
+    resp = await client.get("/cards/nope.png")
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
+async def test_cards_blocks_traversal(client):
+    resp = await client.get("/cards/../config.py")
+    assert resp.status in (400, 404)
+
+
+@pytest.mark.asyncio
+async def test_admin_requires_auth(client):
+    resp = await client.get("/admin")
+    assert resp.status == 401
+    assert "Basic" in resp.headers.get("WWW-Authenticate", "")
+
+
+@pytest.mark.asyncio
+async def test_admin_rejects_wrong_password(client):
+    import base64 as _b
+    creds = _b.b64encode(b"admin:wrong").decode()
+    resp = await client.get("/admin", headers={"Authorization": f"Basic {creds}"})
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_admin_renders_with_correct_password(client, tmp_path):
+    import card_store
+    import base64 as _b
+    card_store.save_card(
+        cards_dir=tmp_path / "cards",
+        call_id="adm1",
+        png_bytes=b"x",
+        svg_text="<svg/>",
+        transcription="trött",
+        image_prompt="forest",
+        butler_ack="förträffligt",
+    )
+    creds = _b.b64encode(b"admin:admin-pass").decode()
+    resp = await client.get("/admin", headers={"Authorization": f"Basic {creds}"})
+    assert resp.status == 200
+    body = await resp.text()
+    # Admin DOES show transcription
+    assert "trött" in body
+    assert "forest" in body
+
+
+@pytest.mark.asyncio
+async def test_admin_trigger_starts_call(client):
+    import base64 as _b
+    creds = _b.b64encode(b"admin:admin-pass").decode()
+    resp = await client.post(
+        "/admin/trigger",
+        headers={"Authorization": f"Basic {creds}"},
+    )
+    # DRY_RUN is true in fixture
+    assert resp.status == 200
+    body = await resp.text()
+    assert "Samtal startat" in body or "call_id" in body

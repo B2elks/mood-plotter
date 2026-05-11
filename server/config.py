@@ -18,11 +18,15 @@ ELEVENLABS_VOICE_ID = os.environ["ELEVENLABS_VOICE_ID"]
 
 SERVER_PUBLIC_URL = os.environ["SERVER_PUBLIC_URL"].rstrip("/")
 PI_TOKEN = os.environ["PI_TOKEN"]
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 COOLDOWN_SECONDS = int(os.environ.get("COOLDOWN_SECONDS", "300"))
 DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
+# Tillåt samtal även när ingen plotter är ansluten via WS (för server-only-läge).
+ALLOW_NO_PLOTTER = os.environ.get("ALLOW_NO_PLOTTER", "false").lower() == "true"
 
 PORT = int(os.environ.get("PORT", "8095"))
 
 BASE_DIR = Path(__file__).parent
 AUDIO_DIR = BASE_DIR / "audio"
+CARDS_DIR = BASE_DIR / "cards"
 COOLDOWN_DB = BASE_DIR / "cooldown.db"

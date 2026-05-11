@@ -1,14 +1,17 @@
 """mood-plotter aiohttp-server."""
 import asyncio
+import base64
 import logging
 import uuid
 from pathlib import Path
 
 from aiohttp import web
 
+import card_store
 import config
 import elks_handler
 import image_pipeline
+import templates
 import tts_cache
 import tts_live
 import voice_butler
@@ -22,34 +25,60 @@ logging.basicConfig(
 log = logging.getLogger("mood-plotter")
 
 
-def _check_auth(request) -> bool:
+def _check_pi_auth(request) -> bool:
     auth = request.headers.get("Authorization", "")
     return auth == f"Bearer {config.PI_TOKEN}"
 
 
-async def trigger_handler(request):
-    if not _check_auth(request):
-        return web.Response(status=401, text="unauthorized")
+def _check_admin_auth(request) -> bool:
+    """HTTP Basic Auth: user='admin', password=ADMIN_PASSWORD."""
+    if not config.ADMIN_PASSWORD:
+        return False
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Basic "):
+        return False
+    try:
+        decoded = base64.b64decode(auth[6:]).decode()
+        user, _, pw = decoded.partition(":")
+    except Exception:
+        return False
+    return user == "admin" and pw == config.ADMIN_PASSWORD
 
-    cd: Cooldown = request.app["cooldown"]
+
+def _admin_unauthorized() -> web.Response:
+    return web.Response(
+        status=401,
+        text="auth required",
+        headers={"WWW-Authenticate": 'Basic realm="moodplotter admin"'},
+    )
+
+
+async def _start_call(app, dry_run: bool = False) -> tuple[int, dict]:
+    """Gemensam logik for både /trigger och /admin/trigger.
+
+    Returnerar (status, body)."""
+    cd: Cooldown = app["cooldown"]
     if not cd.try_acquire():
-        return web.Response(status=429, text="cooldown")
+        return 429, {"error": "cooldown"}
 
-    dispatcher: WSDispatcher = request.app["ws_dispatcher"]
-    if not config.DRY_RUN and dispatcher.get_ready_client() is None:
+    dispatcher: WSDispatcher = app["ws_dispatcher"]
+    # Med en plotter inkopplad kraver vi en ready klient. I server-utan-plotter
+    # läget skippar vi check:en — då plottas bara på galleri-sidan.
+    if (
+        not config.DRY_RUN
+        and not dry_run
+        and not config.ALLOW_NO_PLOTTER
+        and dispatcher.get_ready_client() is None
+    ):
         cd.release()
-        return web.Response(status=503, text="no plotter ready")
+        return 503, {"error": "no plotter ready"}
 
     call_id = str(uuid.uuid4())[:8]
-    request.app["pending_calls"][call_id] = {"state": "calling"}
+    app["pending_calls"][call_id] = {"state": "calling"}
 
-    if config.DRY_RUN:
-        log.info(
-            "[DRY_RUN] skulle ringa %s, call_id=%s",
-            config.USER_PHONE_NUMBER,
-            call_id,
-        )
-        return web.json_response({"call_id": call_id, "dry_run": True})
+    if config.DRY_RUN or dry_run:
+        log.info("[DRY_RUN] skulle ringa %s, call_id=%s", config.USER_PHONE_NUMBER, call_id)
+        return 200, {"call_id": call_id, "dry_run": True}
 
     elks_id = await elks_handler.initiate_call(
         api_username=config.ELKS_API_USERNAME,
@@ -61,25 +90,29 @@ async def trigger_handler(request):
     )
     if elks_id is None:
         cd.release()
-        request.app["pending_calls"].pop(call_id, None)
-        return web.Response(status=502, text="elks call failed")
+        app["pending_calls"].pop(call_id, None)
+        return 502, {"error": "elks call failed"}
 
-    request.app["pending_calls"][call_id]["elks_id"] = elks_id
-    return web.json_response({"call_id": call_id, "elks_id": elks_id})
+    app["pending_calls"][call_id]["elks_id"] = elks_id
+    return 200, {"call_id": call_id, "elks_id": elks_id}
+
+
+async def trigger_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    status, body = await _start_call(request.app)
+    return web.json_response(body, status=status)
 
 
 async def elks_answer_handler(request):
     call_id = request.query.get("call_id", "")
-    # Update state so a hangup-after-answer doesn't release the cooldown.
     if call_id in request.app["pending_calls"]:
         request.app["pending_calls"][call_id]["state"] = "answered"
     play_url = tts_cache.pick_question_url(
         audio_dir=config.AUDIO_DIR,
         public_base_url=config.SERVER_PUBLIC_URL,
     )
-    record_callback = (
-        f"{config.SERVER_PUBLIC_URL}/elks/recording?call_id={call_id}"
-    )
+    record_callback = f"{config.SERVER_PUBLIC_URL}/elks/recording?call_id={call_id}"
     log.info("call_id=%s answer -> fraga %s", call_id, play_url)
     return web.json_response(
         elks_handler.build_answer_response(play_url, record_callback)
@@ -92,11 +125,8 @@ async def elks_recording_handler(request):
     recording_url = data.get("recordurl") or data.get("url", "")
     log.info("call_id=%s inspelning klar: %s", call_id, recording_url)
 
-    # Synchronously: download recording, transcribe, analyze, generate ack MP3.
-    # This blocks the 46elks recording-callback for ~3-6s, but it tolerates that
-    # and it's the only way to return the personalized ack URL.
     ack_url = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
-    image_prompt = None
+    pipeline_payload = None
     try:
         import aiohttp as _aiohttp
 
@@ -111,11 +141,8 @@ async def elks_recording_handler(request):
         result = voice_butler.analyze_response(text, config.OPENAI_API_KEY)
         log.info(
             "call_id=%s prompt: %s | ack: %s",
-            call_id,
-            result.image_prompt[:60],
-            result.butler_ack[:60],
+            call_id, result.image_prompt[:60], result.butler_ack[:60],
         )
-        image_prompt = result.image_prompt
 
         ack_url = tts_live.generate_ack_mp3(
             text=result.butler_ack,
@@ -127,24 +154,38 @@ async def elks_recording_handler(request):
         )
 
         wav_path.unlink(missing_ok=True)
+        pipeline_payload = {
+            "transcription": text,
+            "image_prompt": result.image_prompt,
+            "butler_ack": result.butler_ack,
+        }
     except Exception as e:
         log.exception("call_id=%s fel i synchronous pipeline: %s", call_id, e)
 
-    # Background: image generation + plotter dispatch (slow, fire-and-forget).
-    if image_prompt:
-        asyncio.create_task(_generate_and_plot(request.app, call_id, image_prompt))
+    if pipeline_payload:
+        asyncio.create_task(_generate_and_store(request.app, call_id, pipeline_payload))
 
     return web.json_response(elks_handler.build_record_response(ack_url))
 
 
-async def _generate_and_plot(app, call_id: str, image_prompt: str):
-    """Bakgrundstask: DALL.E -> vpype -> skicka SVG till plotter."""
+async def _generate_and_store(app, call_id: str, meta: dict):
+    """Bakgrund: DALL-E PNG, vpype SVG, spara till cards/, skicka till plotter."""
     try:
-        svg = image_pipeline.generate_svg(image_prompt, config.OPENAI_API_KEY)
+        png = image_pipeline.generate_png(meta["image_prompt"], config.OPENAI_API_KEY)
+        svg = image_pipeline.png_to_svg(png)
+        card_store.save_card(
+            cards_dir=config.CARDS_DIR,
+            call_id=call_id,
+            png_bytes=png,
+            svg_text=svg,
+            transcription=meta.get("transcription", ""),
+            image_prompt=meta.get("image_prompt", ""),
+            butler_ack=meta.get("butler_ack", ""),
+        )
         sent = await app["ws_dispatcher"].send_svg(svg)
-        log.info("call_id=%s SVG skickad till plotter: %s", call_id, sent)
+        log.info("call_id=%s sparat + skickat till plotter: %s", call_id, sent)
     except Exception as e:
-        log.exception("call_id=%s fel i _generate_and_plot: %s", call_id, e)
+        log.exception("call_id=%s fel i _generate_and_store: %s", call_id, e)
 
 
 async def elks_hangup_handler(request):
@@ -157,13 +198,49 @@ async def elks_hangup_handler(request):
 
 
 async def audio_handler(request):
-    name = request.match_info["name"]
+    return _serve_static(config.AUDIO_DIR, request.match_info["name"])
+
+
+async def cards_handler(request):
+    return _serve_static(config.CARDS_DIR, request.match_info["name"])
+
+
+def _serve_static(base_dir: Path, name: str) -> web.Response:
     if "/" in name or ".." in name:
         return web.Response(status=400)
-    path = config.AUDIO_DIR / name
+    path = base_dir / name
     if not path.is_file():
         return web.Response(status=404)
     return web.FileResponse(path)
+
+
+async def gallery_handler(request):
+    cards = card_store.list_cards(config.CARDS_DIR)
+    html_str = templates.gallery_page(cards, config.SERVER_PUBLIC_URL)
+    return web.Response(text=html_str, content_type="text/html")
+
+
+async def admin_handler(request):
+    if not _check_admin_auth(request):
+        return _admin_unauthorized()
+    cards = card_store.list_cards(config.CARDS_DIR)
+    recent_metas = []
+    for c in cards[:25]:
+        meta = card_store.load_meta(config.CARDS_DIR, c.call_id)
+        if meta:
+            recent_metas.append(meta)
+    html_str = templates.admin_page(cards, config.CARDS_DIR, recent_metas)
+    return web.Response(text=html_str, content_type="text/html")
+
+
+async def admin_trigger_handler(request):
+    if not _check_admin_auth(request):
+        return _admin_unauthorized()
+    status, body = await _start_call(request.app)
+    ok = status == 200
+    msg = body.get("error") or f"Samtal startat (call_id={body.get('call_id','?')})"
+    html_str = templates.admin_trigger_result(ok, msg)
+    return web.Response(text=html_str, content_type="text/html", status=status)
 
 
 async def ws_handler(request):
@@ -206,6 +283,13 @@ def create_app():
     app["ws_dispatcher"] = WSDispatcher()
     app["pending_calls"] = {}
 
+    config.CARDS_DIR.mkdir(parents=True, exist_ok=True)
+    config.AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+    app.router.add_get("/", gallery_handler)
+    app.router.add_get("/admin", admin_handler)
+    app.router.add_post("/admin/trigger", admin_trigger_handler)
+    app.router.add_get("/cards/{name}", cards_handler)
     app.router.add_post("/trigger", trigger_handler)
     app.router.add_get("/elks/answer", elks_answer_handler)
     app.router.add_post("/elks/answer", elks_answer_handler)
