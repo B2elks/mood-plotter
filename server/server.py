@@ -112,11 +112,19 @@ async def elks_answer_handler(request):
         audio_dir=config.AUDIO_DIR,
         public_base_url=config.SERVER_PUBLIC_URL,
     )
-    record_callback = f"{config.SERVER_PUBLIC_URL}/elks/recording?call_id={call_id}"
+    after_play_url = f"{config.SERVER_PUBLIC_URL}/elks/after_play?call_id={call_id}"
     log.info("call_id=%s answer -> fraga %s", call_id, play_url)
     return web.json_response(
-        elks_handler.build_answer_response(play_url, record_callback)
+        elks_handler.build_answer_response(play_url, after_play_url)
     )
+
+
+async def elks_after_play_handler(request):
+    """Efter att fragan spelats, be 46elks spela in svaret."""
+    call_id = request.query.get("call_id", "")
+    record_callback = f"{config.SERVER_PUBLIC_URL}/elks/recording?call_id={call_id}"
+    log.info("call_id=%s after_play -> record till %s", call_id, record_callback)
+    return web.json_response(elks_handler.build_record_action(record_callback))
 
 
 async def elks_recording_handler(request):
@@ -293,6 +301,8 @@ def create_app():
     app.router.add_post("/trigger", trigger_handler)
     app.router.add_get("/elks/answer", elks_answer_handler)
     app.router.add_post("/elks/answer", elks_answer_handler)
+    app.router.add_get("/elks/after_play", elks_after_play_handler)
+    app.router.add_post("/elks/after_play", elks_after_play_handler)
     app.router.add_post("/elks/recording", elks_recording_handler)
     app.router.add_get("/elks/hangup", elks_hangup_handler)
     app.router.add_post("/elks/hangup", elks_hangup_handler)
