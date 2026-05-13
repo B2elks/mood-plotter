@@ -1,0 +1,5 @@
+# Tving libinput att behandla Waveshare FT5x06-touch som touchscreen, inte mouse.
+# Drivrutinen registrerar enheten som POINTER (PROP=2) sa libinput skippar
+# den fran sin "touchscreen"-kategori, vilket gor att Wayland/Cage inte
+# levererar touch-events till Chromium.
+SUBSYSTEM=="input", ATTRS{name}=="*ft5x06*", ENV{ID_INPUT_TOUCHSCREEN}="1", ENV{ID_INPUT_MOUSE}=""
