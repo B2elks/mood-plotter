@@ -38,16 +38,16 @@ def png_to_svg(png_bytes: bytes) -> str:
         svg_path = tmp_path / "out.svg"
         png_path.write_bytes(png_bytes)
 
-        # vpype 'layout' centrerar men SKALAR INTE — sa vi maste lagga till
-        # 'scaleto' for att fa in iread-output (~1024x1024 px) i 10cm-rutan.
+        # Sketch-stil: merge nara linjer aggressivt, fa bort sma fragment,
+        # forenkla kurvor — men behall mer detalj an "child-doodle"-varianten.
         cmd = [
             "vpype",
             "iread", str(png_path),
-            "linemerge", "--tolerance", "0.8mm",
-            "filter", "--min-length", "2mm",
-            "linesimplify", "--tolerance", "0.3mm",
+            "linemerge", "--tolerance", "1.5mm",
+            "filter", "--min-length", "3mm",
+            "linesimplify", "--tolerance", "0.4mm",
             "linesort",
-            "scaleto", "9cm", "9cm",  # 9x9 cm = 1 cm marginal innan layout
+            "scaleto", "9cm", "9cm",
             "layout", "--align", "center", "--valign", "center", "10cmx10cm",
             "write", str(svg_path),
         ]
