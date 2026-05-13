@@ -10,17 +10,22 @@ log = logging.getLogger(__name__)
 
 
 def _call_dalle(prompt: str, api_key: str) -> bytes:
-    """Generera en PNG fran en prompt med DALL-E 3."""
+    """Generera en PNG fran en prompt med gpt-image-1.
+
+    DALL-E 3 ar borttaget. gpt-image-1 returnerar alltid b64_json (ingen
+    response_format-param), och har inte quality='standard' — den vill ha
+    low/medium/high/auto. 'low' ger snabbare svar och mindre detaljer,
+    vilket passar pen-plottern bra anda.
+    """
     import base64
 
     client = OpenAI(api_key=api_key)
     resp = client.images.generate(
-        model="dall-e-3",
+        model="gpt-image-1",
         prompt=prompt,
         size="1024x1024",
-        quality="standard",
+        quality="low",
         n=1,
-        response_format="b64_json",
     )
     return base64.b64decode(resp.data[0].b64_json)
 
