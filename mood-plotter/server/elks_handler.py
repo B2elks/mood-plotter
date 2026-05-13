@@ -19,17 +19,15 @@ def build_answer_response(play_url: str, after_play_url: str) -> dict:
 def build_record_action(record_callback: str, next_url: str) -> dict:
     """Svar efter att fragan spelats: be 46elks spela in svaret.
 
-    next_url           -- URL som 46elks fetcher EFTER att inspelningen
-                          POSTats. Maste finnas — annars hanger 46elks pa
-                          direkt och ack-frasen spelas aldrig.
-    silencedetection=no -- vanta hela timelimit, sluta inte vid tystnad
-    timelimit=8        -- maximal langd i sekunder
+    silencedetection=yes (default) -- avsluta sa fort anvandaren tystnar,
+        sa ack-frasen spelas direkt utan att vi vantar i onodan
+    timelimit=10                   -- max-tak om nan pratar pa
     """
     return {
         "record": record_callback,
         "next": next_url,
-        "silencedetection": "no",
-        "timelimit": 8,
+        "silencedetection": "yes",
+        "timelimit": 10,
     }
 
 

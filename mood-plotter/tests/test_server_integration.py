@@ -124,50 +124,16 @@ class _FakeSession:
 
 
 @pytest.mark.asyncio
-async def test_elks_play_ack_returns_category_ack_url(client, monkeypatch):
-    """/elks/play_ack must return the category-based pre-recorded ack URL
-    after the recording-pipeline has classified the transcription."""
-    from voice_butler import ButlerResult
+async def test_elks_play_ack_returns_instant_neutral(client, tmp_path):
+    """/elks/play_ack must return an ack_neutral URL instantly, no waiting."""
+    # Pre-create a neutral ack file so _pick_random_ack finds it.
+    (tmp_path / "audio" / "ack_neutral_01.mp3").write_bytes(b"x")
 
-    monkeypatch.setattr(
-        "voice_butler.transcribe_audio",
-        lambda path, api_key: "Jag är så trött och utmattad",
-    )
-    monkeypatch.setattr(
-        "voice_butler.analyze_response",
-        lambda text, api_key: ButlerResult(
-            image_prompt="a peaceful watercolor",
-            butler_ack="(unused)",
-        ),
-    )
-    monkeypatch.setattr(
-        "image_pipeline.generate_png",
-        lambda prompt, api_key: b"PNG",
-    )
-    monkeypatch.setattr(
-        "image_pipeline.png_to_svg",
-        lambda png: "<svg/>",
-    )
-    monkeypatch.setattr("aiohttp.ClientSession", lambda **kw: _FakeSession())
-
-    # Prime pending_calls (normally done by /trigger).
     client.app["pending_calls"]["abc"] = {"state": "calling"}
-
-    # Simulate the after_play step first — it creates the ack_event.
-    after_resp = await client.get("/elks/after_play?call_id=abc")
-    assert after_resp.status == 200
-
-    # Then recording arrives — categorizes, sets ack_url, signals event.
-    rec_resp = await client.post(
-        "/elks/recording?call_id=abc",
-        data={"wav": "https://example.com/r.wav"},
-    )
-    assert rec_resp.status == 200
-
-    # /elks/play_ack should return the 'tired' category ack URL.
     ack_resp = await client.get("/elks/play_ack?call_id=abc")
     body = await ack_resp.json()
-    assert "ack_tired.mp3" in body["play"]
+    assert "ack_neutral" in body["play"]
+    assert "play" in body
 
 
 # Gallery / admin / cards routes (post-server-only-mode addition)

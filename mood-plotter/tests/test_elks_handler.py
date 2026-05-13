@@ -26,8 +26,8 @@ def test_build_record_action_returns_record_url_and_next():
     assert resp == {
         "record": "https://example.com/recording",
         "next": "https://example.com/play_ack",
-        "silencedetection": "no",
-        "timelimit": 8,
+        "silencedetection": "yes",
+        "timelimit": 10,
     }
 
 

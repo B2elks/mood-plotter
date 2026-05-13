@@ -8,7 +8,6 @@ from pathlib import Path
 from aiohttp import web
 
 import card_store
-import categorize
 import config
 import elks_handler
 import image_pipeline
@@ -120,21 +119,10 @@ async def elks_answer_handler(request):
 
 
 async def elks_after_play_handler(request):
-    """Efter att fragan spelats, be 46elks spela in svaret.
-
-    Satter aven 'next' till /elks/play_ack — DIT 46elks gar efter att
-    inspelningen postats. Annars hanger 46elks pa direkt och ack-frasen
-    spelas aldrig.
-    """
+    """Efter att fragan spelats, be 46elks spela in svaret."""
     call_id = request.query.get("call_id", "")
     record_callback = f"{config.SERVER_PUBLIC_URL}/elks/recording?call_id={call_id}"
     play_ack_url = f"{config.SERVER_PUBLIC_URL}/elks/play_ack?call_id={call_id}"
-
-    # Skapa async-event sa play_ack-handlern kan vanta pa pipelinen.
-    if call_id in request.app["pending_calls"]:
-        request.app["pending_calls"][call_id]["ack_event"] = asyncio.Event()
-        request.app["pending_calls"][call_id]["ack_url"] = None
-
     log.info(
         "call_id=%s after_play -> record till %s, next %s",
         call_id, record_callback, play_ack_url,
@@ -145,11 +133,7 @@ async def elks_after_play_handler(request):
 
 
 async def elks_recording_handler(request):
-    """Tar emot inspelningen, transkriberar, valjer pre-recorded ack, signalerar.
-
-    Snabbt sync-flode (~Whisper-tid): Whisper -> keyword-kategorisering ->
-    pre-recorded ack-URL. LLM och bildgenerering kors i bakgrund.
-    """
+    """Tar emot inspelningen och kickar igang ALLT i bakgrund. Inget sync."""
     call_id = request.query.get("call_id", "")
     data = await request.post()
     recording_url = data.get("wav", "")
@@ -159,18 +143,16 @@ async def elks_recording_handler(request):
         call_id, duration, recording_url,
     )
 
-    fallback_ack = f"{config.SERVER_PUBLIC_URL}/audio/ack_neutral.mp3"
-    pending = request.app["pending_calls"].get(call_id, {})
+    # Inget vantande — kor allt i bakgrund. play_ack spelar ack_neutral direkt.
+    if recording_url:
+        asyncio.create_task(
+            _process_recording_background(request.app, call_id, recording_url)
+        )
+    return web.Response(text="")
 
-    if not recording_url:
-        log.warning("call_id=%s ingen wav-URL i recording-callback", call_id)
-        pending["ack_url"] = fallback_ack
-        if "ack_event" in pending:
-            pending["ack_event"].set()
-        return web.Response(text="")
 
-    text = ""
-    ack_url = fallback_ack
+async def _process_recording_background(app, call_id: str, recording_url: str):
+    """Bakgrund: ladda ner wav, Whisper, LLM, DALL-E, vpype, spara kort."""
     try:
         import aiohttp as _aiohttp
 
@@ -185,59 +167,9 @@ async def elks_recording_handler(request):
         text = voice_butler.transcribe_audio(wav_path, config.OPENAI_API_KEY)
         log.info("call_id=%s transkribering: %r", call_id, text)
 
-        category = categorize.categorize(text)
-        ack_url = f"{config.SERVER_PUBLIC_URL}/audio/ack_{category}.mp3"
-        log.info("call_id=%s kategori=%s -> ack=%s", call_id, category, ack_url)
+        result = voice_butler.analyze_response(text, config.OPENAI_API_KEY)
+        log.info("call_id=%s image_prompt: %s", call_id, result.image_prompt[:80])
 
-        wav_path.unlink(missing_ok=True)
-    except Exception as e:
-        log.exception("call_id=%s fel i sync-pipeline: %s", call_id, e)
-
-    # Signalera till play_ack-handlern att ack-URL ar redo (sa fort som mojligt).
-    pending["ack_url"] = ack_url
-    if "ack_event" in pending:
-        pending["ack_event"].set()
-    log.info("call_id=%s ack-URL satt: %s", call_id, ack_url)
-
-    # I bakgrunden: LLM tar fram image-prompt, sen DALL-E + vpype + spara kort.
-    asyncio.create_task(
-        _generate_and_store(request.app, call_id, text)
-    )
-
-    # 46elks ignorerar svaret pa recording-callbacken; ack spelas via play_ack.
-    return web.Response(text="")
-
-
-async def elks_play_ack_handler(request):
-    """46elks anropar denna EFTER recording postats. Vantar pa ack-URL och spelar."""
-    call_id = request.query.get("call_id", "")
-    pending = request.app["pending_calls"].get(call_id, {})
-    fallback = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
-
-    event: asyncio.Event = pending.get("ack_event")
-    if event is None:
-        log.warning("call_id=%s play_ack utan ack_event — fallback", call_id)
-        return web.json_response(elks_handler.build_record_response(fallback))
-
-    try:
-        await asyncio.wait_for(event.wait(), timeout=15)
-    except asyncio.TimeoutError:
-        log.warning("call_id=%s play_ack timeout efter 15s — fallback", call_id)
-        return web.json_response(elks_handler.build_record_response(fallback))
-
-    ack_url = pending.get("ack_url", fallback)
-    log.info("call_id=%s play_ack -> %s", call_id, ack_url)
-    return web.json_response(elks_handler.build_record_response(ack_url))
-
-
-async def _generate_and_store(app, call_id: str, transcription: str):
-    """Bakgrund: LLM image-prompt -> DALL-E PNG -> vpype SVG -> spara + plotter."""
-    try:
-        result = voice_butler.analyze_response(transcription, config.OPENAI_API_KEY)
-        log.info(
-            "call_id=%s image_prompt: %s",
-            call_id, result.image_prompt[:80],
-        )
         png = image_pipeline.generate_png(result.image_prompt, config.OPENAI_API_KEY)
         svg = image_pipeline.png_to_svg(png)
         card_store.save_card(
@@ -245,14 +177,36 @@ async def _generate_and_store(app, call_id: str, transcription: str):
             call_id=call_id,
             png_bytes=png,
             svg_text=svg,
-            transcription=transcription,
+            transcription=text,
             image_prompt=result.image_prompt,
             butler_ack=result.butler_ack,
         )
         sent = await app["ws_dispatcher"].send_svg(svg)
-        log.info("call_id=%s sparat + skickat till plotter: %s", call_id, sent)
+        log.info("call_id=%s kort sparat + skickat till plotter: %s", call_id, sent)
+
+        wav_path.unlink(missing_ok=True)
     except Exception as e:
-        log.exception("call_id=%s fel i _generate_and_store: %s", call_id, e)
+        log.exception("call_id=%s fel i background-pipeline: %s", call_id, e)
+
+
+async def elks_play_ack_handler(request):
+    """46elks anropar denna direkt efter recording. Ingen vantan — slumpa
+    en pre-recorded ack och spela direkt."""
+    call_id = request.query.get("call_id", "")
+    ack_url = _pick_random_ack()
+    log.info("call_id=%s play_ack -> %s (instant)", call_id, ack_url)
+    return web.json_response(elks_handler.build_record_response(ack_url))
+
+
+def _pick_random_ack() -> str:
+    """Slumpa en ack-MP3 ur audio/. Foretrader ack_neutral_NN.mp3 sa nya
+    varianter plockas upp automatiskt nar de droppas in."""
+    import random
+    candidates = sorted(config.AUDIO_DIR.glob("ack_neutral_*.mp3"))
+    if not candidates:
+        candidates = [config.AUDIO_DIR / "ack_neutral.mp3"]
+    chosen = random.choice(candidates)
+    return f"{config.SERVER_PUBLIC_URL}/audio/{chosen.name}"
 
 
 async def elks_hangup_handler(request):
