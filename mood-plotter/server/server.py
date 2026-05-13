@@ -1,12 +1,14 @@
 """mood-plotter aiohttp-server."""
 import asyncio
 import base64
+import json
 import logging
 import uuid
 from pathlib import Path
 
 from aiohttp import web
 
+import audio_clips
 import card_store
 import config
 import elks_handler
@@ -14,6 +16,7 @@ import image_pipeline
 import templates
 import tts_cache
 import voice_butler
+import ws_voice
 from cooldown import Cooldown
 from ws_dispatcher import WSDispatcher
 
@@ -79,12 +82,19 @@ async def _start_call(app, dry_run: bool = False) -> tuple[int, dict]:
         log.info("[DRY_RUN] skulle ringa %s, call_id=%s", config.USER_PHONE_NUMBER, call_id)
         return 200, {"call_id": call_id, "dry_run": True}
 
+    # Anvand WS-Voice-routing om WS_CONNECT_NUMBER ar satt (realtidsljud),
+    # annars HTTP-record-vagen som fallback.
+    if config.WS_CONNECT_NUMBER:
+        voice_start = json.dumps({"connect": config.WS_CONNECT_NUMBER})
+    else:
+        voice_start = f"{config.SERVER_PUBLIC_URL}/elks/answer?call_id={call_id}"
+
     elks_id = await elks_handler.initiate_call(
         api_username=config.ELKS_API_USERNAME,
         api_password=config.ELKS_API_PASSWORD,
         from_number=config.ELKS_FROM_NUMBER,
         to_number=config.USER_PHONE_NUMBER,
-        voice_start_url=f"{config.SERVER_PUBLIC_URL}/elks/answer?call_id={call_id}",
+        voice_start_url=voice_start,
         whenhangup_url=f"{config.SERVER_PUBLIC_URL}/elks/hangup?call_id={call_id}",
     )
     if elks_id is None:
@@ -316,6 +326,14 @@ def create_app():
     config.CARDS_DIR.mkdir(parents=True, exist_ok=True)
     config.AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Forhandsladda PCM-klipp for WS Voice (snabb stromning under samtal).
+    app["question_clips"] = audio_clips.load_clips(config.AUDIO_DIR, "q")
+    app["ack_clips"] = audio_clips.load_clips(config.AUDIO_DIR, "ack_neutral")
+    log.info(
+        "Laddade %d fragor + %d ack-klipp till minnet",
+        len(app["question_clips"]), len(app["ack_clips"]),
+    )
+
     app.router.add_get("/", gallery_handler)
     app.router.add_get("/admin", admin_handler)
     app.router.add_post("/admin/trigger", admin_trigger_handler)
@@ -334,13 +352,40 @@ def create_app():
     app.router.add_post("/elks/hangup", elks_hangup_handler)
     app.router.add_get("/audio/{name}", audio_handler)
     app.router.add_get("/ws", ws_handler)
+    app.router.add_get("/ws-voice", ws_voice.handle_ws_voice)
 
     return app
 
 
 def main():
     app = create_app()
-    web.run_app(app, host="127.0.0.1", port=config.PORT)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(_run_two_listeners(app))
+
+
+async def _run_two_listeners(app):
+    """Bind HTTP-rutter till 127.0.0.1 (via nginx) och /ws-voice till
+    0.0.0.0:WS_VOICE_PORT (direktanslutning fran 46elks).
+
+    Da exponerar vi inte /admin etc. utanfor nginx, men 46elks kan
+    fortfarande na /ws-voice direkt utan TLS-terminering.
+    """
+    runner = web.AppRunner(app)
+    await runner.setup()
+    sites = [
+        web.TCPSite(runner, "127.0.0.1", config.PORT),
+        web.TCPSite(runner, "0.0.0.0", config.WS_VOICE_PORT),
+    ]
+    for site in sites:
+        await site.start()
+    log.info(
+        "Lyssnar pa 127.0.0.1:%d (HTTP) och 0.0.0.0:%d (WS Voice)",
+        config.PORT, config.WS_VOICE_PORT,
+    )
+    # Halva forever
+    while True:
+        await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
