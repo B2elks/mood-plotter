@@ -1,0 +1,15 @@
+[Unit]
+Description=Mood Plotter — WiFi-setup Flask-app
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/mood-plotter/pi/kiosk
+Environment=GALLERY_URL=https://moodplotter.skyttberg.nu/
+ExecStart=/home/pi/mood-plotter/.venv/bin/python wifi_app.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

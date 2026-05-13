@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>WiFi-installning</title>
+<style>
+  :root {
+    --bg: #1b1b2e;
+    --card: #2a2a44;
+    --accent: #ff66cc;
+    --accent-strong: #ff00ff;
+    --text: #ffffff;
+    --muted: #b0b0d0;
+    --key: #3a3a55;
+    --key-active: #5a5a80;
+  }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    background: var(--bg); color: var(--text);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  body { display: flex; flex-direction: column; }
+  header {
+    padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #444;
+  }
+  header h1 { font-size: 20px; margin: 0; color: var(--accent); }
+  #refresh, #back {
+    background: var(--card); border: 1px solid #555; color: var(--text);
+    padding: 8px 14px; border-radius: 6px; font-size: 16px;
+  }
+  main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* Network list */
+  #networks {
+    flex: 1; overflow-y: auto; padding: 4px 8px;
+    display: none;
+  }
+  #networks.visible { display: block; }
+  .net {
+    display: flex; align-items: center;
+    padding: 14px 14px;
+    border-radius: 8px;
+    background: var(--card);
+    margin: 6px 0;
+    font-size: 18px;
+  }
+  .net .ssid { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .net .sig { color: var(--muted); margin-left: 8px; font-size: 14px; }
+  .net .lock { margin-left: 8px; opacity: 0.7; }
+
+  /* Password / keyboard view */
+  #pw-view {
+    flex: 1; display: none; flex-direction: column;
+    padding: 8px 12px;
+  }
+  #pw-view.visible { display: flex; }
+  #pw-ssid { font-size: 16px; color: var(--muted); margin-bottom: 4px; }
+  #pw-input-wrap {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border-radius: 8px; padding: 8px;
+    margin-bottom: 6px;
+  }
+  #pw-input {
+    flex: 1;
+    font-size: 22px; padding: 8px; background: transparent;
+    border: 0; color: var(--text); outline: none;
+    letter-spacing: 1px;
+  }
+  #pw-toggle, #pw-connect, #pw-cancel {
+    padding: 8px 14px; font-size: 16px;
+    background: var(--key); color: var(--text);
+    border: 0; border-radius: 6px;
+  }
+  #pw-connect { background: var(--accent-strong); }
+
+  /* Virtual keyboard */
+  #kb {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-top: auto;
+  }
+  .kb-row { display: flex; gap: 4px; justify-content: center; }
+  .kb-row button {
+    flex: 1;
+    min-height: 42px;
+    font-size: 18px;
+    background: var(--key); color: var(--text);
+    border: 1px solid #555;
+    border-radius: 6px;
+  }
+  .kb-row button:active, .kb-row button.active {
+    background: var(--key-active);
+  }
+  .kb-row button[data-key="space"] { flex: 4; }
+  .kb-row button[data-key="shift"], .kb-row button[data-key="back"],
+  .kb-row button[data-key="layer"] { flex: 1.4; font-size: 14px; }
+
+  /* Status / toast */
+  #status {
+    display: none;
+    position: fixed; left: 50%; bottom: 18px;
+    transform: translateX(-50%);
+    padding: 10px 16px; border-radius: 8px;
+    background: var(--card);
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  #status.show { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>WiFi</h1>
+  <div>
+    <button id="back">&#8617; Tillbaka</button>
+    <button id="refresh">&#x21bb; Skanna</button>
+  </div>
+</header>
+<main>
+  <ul id="networks" class="visible"></ul>
+
+  <div id="pw-view">
+    <div id="pw-ssid"></div>
+    <div id="pw-input-wrap">
+      <input id="pw-input" type="password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="pw-toggle">&#128065;</button>
+      <button id="pw-cancel">Avbryt</button>
+      <button id="pw-connect">Anslut</button>
+    </div>
+    <div id="kb"></div>
+  </div>
+</main>
+<div id="status"></div>
+
+<script>
+const networksEl = document.getElementById('networks');
+const pwView = document.getElementById('pw-view');
+const pwInput = document.getElementById('pw-input');
+const pwSsidEl = document.getElementById('pw-ssid');
+const statusEl = document.getElementById('status');
+let currentSsid = null;
+let shifted = false;
+let layer = 0;  // 0 = letters, 1 = numbers/symbols
+
+function showStatus(msg, ms=2500) {
+  statusEl.textContent = msg;
+  statusEl.classList.add('show');
+  if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
+}
+
+async function loadNetworks() {
+  networksEl.innerHTML = '<li class="net"><span class="ssid">Skannar...</span></li>';
+  const res = await fetch('/api/networks');
+  const data = await res.json();
+  networksEl.innerHTML = '';
+  if (!data.length) {
+    networksEl.innerHTML = '<li class="net"><span class="ssid">Inga nätverk synliga</span></li>';
+    return;
+  }
+  for (const n of data) {
+    const li = document.createElement('li');
+    li.className = 'net';
+    li.innerHTML = `
+      <span class="ssid">${escapeHtml(n.ssid)}</span>
+      <span class="lock">${n.secured ? '🔒' : ''}</span>
+      <span class="sig">${n.signal}%</span>
+    `;
+    li.addEventListener('click', () => choose(n));
+    networksEl.appendChild(li);
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function choose(net) {
+  currentSsid = net.ssid;
+  pwSsidEl.textContent = net.ssid + (net.secured ? ' 🔒' : '');
+  pwInput.value = '';
+  networksEl.classList.remove('visible');
+  pwView.classList.add('visible');
+  if (!net.secured) {
+    // Inget lösenord — anslut direkt
+    doConnect('');
+  }
+}
+
+function backToList() {
+  pwView.classList.remove('visible');
+  networksEl.classList.add('visible');
+  currentSsid = null;
+}
+
+async function doConnect(password) {
+  showStatus('Ansluter till "' + currentSsid + '"...', 0);
+  try {
+    const res = await fetch('/api/connect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ssid: currentSsid, password}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showStatus('Ansluten! Laddar galleri...', 1000);
+      setTimeout(() => { window.location = '/'; }, 1200);
+    } else {
+      showStatus('Misslyckades: ' + (data.error || 'okänt fel'));
+    }
+  } catch (e) {
+    showStatus('Fel: ' + e.message);
+  }
+}
+
+document.getElementById('refresh').addEventListener('click', loadNetworks);
+document.getElementById('back').addEventListener('click', () => {
+  if (pwView.classList.contains('visible')) backToList();
+  else window.location = '/';
+});
+document.getElementById('pw-cancel').addEventListener('click', backToList);
+document.getElementById('pw-connect').addEventListener('click', () => doConnect(pwInput.value));
+document.getElementById('pw-toggle').addEventListener('click', () => {
+  pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+});
+
+// Build virtual keyboard
+const LAYERS = [
+  [
+    ['1','2','3','4','5','6','7','8','9','0'],
+    ['q','w','e','r','t','y','u','i','o','p'],
+    ['a','s','d','f','g','h','j','k','l','å'],
+    ['shift','z','x','c','v','b','n','m','ä','ö'],
+    ['layer','-','_','.','space','@','/','back'],
+  ],
+  [
+    ['1','2','3','4','5','6','7','8','9','0'],
+    ['!','@','#','$','%','&','*','(',')','+'],
+    ['-','_','=','/','\\',':',';','"',"'",'?'],
+    ['shift','`','~','{','}','[',']','<','>',','],
+    ['layer','.','space','back'],
+  ],
+];
+
+function renderKb() {
+  const kb = document.getElementById('kb');
+  kb.innerHTML = '';
+  const rows = LAYERS[layer];
+  for (const row of rows) {
+    const div = document.createElement('div');
+    div.className = 'kb-row';
+    for (const k of row) {
+      const b = document.createElement('button');
+      b.dataset.key = k;
+      if (k === 'space') b.textContent = '␣';
+      else if (k === 'back') b.textContent = '⌫';
+      else if (k === 'shift') b.textContent = shifted ? 'SHIFT' : 'shift';
+      else if (k === 'layer') b.textContent = layer === 0 ? '#+' : 'abc';
+      else b.textContent = shifted && /[a-zåäö]/.test(k) ? k.toUpperCase() : k;
+      if (k === 'shift' && shifted) b.classList.add('active');
+      b.addEventListener('click', () => onKey(k));
+      div.appendChild(b);
+    }
+    kb.appendChild(div);
+  }
+}
+
+function onKey(k) {
+  if (k === 'shift') { shifted = !shifted; renderKb(); return; }
+  if (k === 'layer') { layer = (layer + 1) % LAYERS.length; renderKb(); return; }
+  if (k === 'back') {
+    pwInput.value = pwInput.value.slice(0, -1);
+    return;
+  }
+  if (k === 'space') { pwInput.value += ' '; return; }
+  pwInput.value += shifted && /[a-zåäö]/.test(k) ? k.toUpperCase() : k;
+  if (shifted) { shifted = false; renderKb(); }
+}
+
+renderKb();
+loadNetworks();
+</script>
+</body>
+</html>
