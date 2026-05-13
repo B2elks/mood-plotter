@@ -14,6 +14,7 @@ import config
 import elks_handler
 import image_pipeline
 import phone_state
+import pir_state
 import templates
 import tts_cache
 import voice_butler
@@ -56,10 +57,15 @@ def _admin_unauthorized() -> web.Response:
     )
 
 
-async def _start_call(app, dry_run: bool = False) -> tuple[int, dict]:
+async def _start_call(app, dry_run: bool = False, source: str = "manual") -> tuple[int, dict]:
     """Gemensam logik for både /trigger och /admin/trigger.
 
-    Returnerar (status, body)."""
+    source=pir/manual. Om PIR ar avslagen i settings blockeras source=pir,
+    men manuella anrop slipper igenom.
+    """
+    if source == "pir" and not pir_state.get_enabled(config.PIR_STATE):
+        return 423, {"error": "pir disabled"}
+
     cd: Cooldown = app["cooldown"]
     if not cd.try_acquire():
         return 429, {"error": "cooldown"}
@@ -111,8 +117,26 @@ async def _start_call(app, dry_run: bool = False) -> tuple[int, dict]:
 async def trigger_handler(request):
     if not _check_pi_auth(request):
         return web.Response(status=401, text="unauthorized")
-    status, body = await _start_call(request.app)
+    data = await request.json() if request.body_exists else {}
+    source = (data or {}).get("source", "manual")
+    status, body = await _start_call(request.app, source=source)
     return web.json_response(body, status=status)
+
+
+async def pir_get_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    return web.json_response({"enabled": pir_state.get_enabled(config.PIR_STATE)})
+
+
+async def pir_set_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    data = await request.json()
+    enabled = bool((data or {}).get("enabled", True))
+    pir_state.set_enabled(config.PIR_STATE, enabled)
+    log.info("pir-state uppdaterat: enabled=%s", enabled)
+    return web.json_response({"enabled": enabled})
 
 
 async def phone_get_handler(request):
@@ -379,6 +403,8 @@ def create_app():
     app.router.add_post("/trigger", trigger_handler)
     app.router.add_get("/api/phone", phone_get_handler)
     app.router.add_put("/api/phone", phone_set_handler)
+    app.router.add_get("/api/pir", pir_get_handler)
+    app.router.add_put("/api/pir", pir_set_handler)
     app.router.add_get("/elks/answer", elks_answer_handler)
     app.router.add_post("/elks/answer", elks_answer_handler)
     app.router.add_get("/elks/after_play", elks_after_play_handler)

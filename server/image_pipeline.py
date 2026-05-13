@@ -38,12 +38,13 @@ def png_to_svg(png_bytes: bytes) -> str:
         svg_path = tmp_path / "out.svg"
         png_path.write_bytes(png_bytes)
 
+        # Skalas till 10x10 cm — passar A6-papper (105x148 mm) med marginal.
         cmd = [
             "vpype",
             "iread", str(png_path),
             "linemerge", "--tolerance", "0.5mm",
             "linesimplify", "--tolerance", "0.2mm",
-            "scaleto", "20cm", "20cm",
+            "scaleto", "10cm", "10cm",
             "write", str(svg_path),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
