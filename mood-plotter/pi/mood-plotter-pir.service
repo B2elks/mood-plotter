@@ -6,7 +6,9 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/mood-plotter/pi
-ExecStart=/home/pi/mood-plotter/.venv/bin/python pir_watcher.py
+EnvironmentFile=/home/pi/mood-plotter/.env
+# System-python (inte venv) for gpiozero+lgpio — Pi OS-paket ar precompilerade.
+ExecStart=/usr/bin/python3 pir_watcher.py
 Restart=on-failure
 RestartSec=5
 
