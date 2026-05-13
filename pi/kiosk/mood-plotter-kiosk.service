@@ -6,9 +6,22 @@ Wants=mood-plotter-wifi.service
 [Service]
 Type=simple
 User=pi
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+UtmpIdentifier=tty1
+UtmpMode=user
 Environment=XDG_RUNTIME_DIR=/run/user/1000
-Environment=WLR_BACKENDS=drm
+# Lat wlroots ladda default-backenden (drm + libinput) — INTE bara drm.
+# Den gamla "WLR_BACKENDS=drm" stangde av libinput, sa touch funkade aldrig.
 Environment=WLR_NO_HARDWARE_CURSORS=1
+Environment=XDG_SEAT=seat0
+Environment=XDG_VTNR=1
 # Cage = minimal Wayland-compositor som korar EN app fullskarm utan WM.
 # Chromium i kiosk-lage pekar pa lokala Flask-appen.
 ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
