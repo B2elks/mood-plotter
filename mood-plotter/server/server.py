@@ -191,11 +191,20 @@ async def _process_recording_background(app, call_id: str, recording_url: str):
 
 async def elks_play_ack_handler(request):
     """46elks anropar denna direkt efter recording. Ingen vantan — slumpa
-    en pre-recorded ack och spela direkt."""
+    en pre-recorded ack och spela direkt. 'next' chainas till /elks/end
+    sa samtalet avslutas direkt nar ack-frasen ar klar."""
     call_id = request.query.get("call_id", "")
     ack_url = _pick_random_ack()
+    end_url = f"{config.SERVER_PUBLIC_URL}/elks/end?call_id={call_id}"
     log.info("call_id=%s play_ack -> %s (instant)", call_id, ack_url)
-    return web.json_response(elks_handler.build_record_response(ack_url))
+    return web.json_response(elks_handler.build_record_response(ack_url, end_url))
+
+
+async def elks_end_handler(request):
+    """Avsluta samtalet direkt nar ack-frasen spelats klart."""
+    call_id = request.query.get("call_id", "")
+    log.info("call_id=%s end -> hangup", call_id)
+    return web.json_response(elks_handler.build_end_response())
 
 
 def _pick_random_ack() -> str:
@@ -318,6 +327,8 @@ def create_app():
     app.router.add_post("/elks/after_play", elks_after_play_handler)
     app.router.add_get("/elks/play_ack", elks_play_ack_handler)
     app.router.add_post("/elks/play_ack", elks_play_ack_handler)
+    app.router.add_get("/elks/end", elks_end_handler)
+    app.router.add_post("/elks/end", elks_end_handler)
     app.router.add_post("/elks/recording", elks_recording_handler)
     app.router.add_get("/elks/hangup", elks_hangup_handler)
     app.router.add_post("/elks/hangup", elks_hangup_handler)
