@@ -16,7 +16,7 @@ def trigger_server():
         resp = requests.post(
             f"{config.SERVER_URL}/trigger",
             headers={"Authorization": f"Bearer {config.PI_TOKEN}"},
-            json={"pi_id": config.PI_ID},
+            json={"pi_id": config.PI_ID, "source": "pir"},
             timeout=5,
         )
         log.info("trigger → %d %s", resp.status_code, resp.text[:100])
