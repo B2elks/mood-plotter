@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=800,initial-scale=1,user-scalable=no">
 <title>Installningar</title>
 <style>
   :root {
@@ -14,56 +14,67 @@
     --muted: #b0b0d0;
     --key: #3a3a55;
     --key-active: #5a5a80;
+    --teal: #00d4ff;
   }
   html, body {
-    margin: 0; padding: 0; height: 100%;
+    margin: 0; padding: 0;
+    width: 800px; height: 480px;
     font-family: -apple-system, "Helvetica Neue", sans-serif;
     background: var(--bg); color: var(--text);
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
+    touch-action: manipulation;
   }
   body { display: flex; flex-direction: column; }
   header {
-    padding: 8px 16px;
+    padding: 6px 12px;
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid #444;
+    flex-shrink: 0;
   }
-  header h1 { font-size: 20px; margin: 0; color: var(--accent); }
+  header h1 { font-size: 18px; margin: 0; color: var(--accent); }
   .topbtn {
     background: var(--card); border: 1px solid #555; color: var(--text);
-    padding: 8px 14px; border-radius: 6px; font-size: 16px;
+    padding: 6px 12px; border-radius: 6px; font-size: 15px;
   }
-  main { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
+  main {
+    flex: 1; overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 8px;
+    gap: 8px;
+    min-height: 0;
+  }
   section {
-    background: var(--card); border-radius: 8px; padding: 12px;
+    background: var(--card); border-radius: 8px; padding: 10px;
   }
-  section h2 { margin: 0 0 8px 0; font-size: 16px; color: var(--muted); }
+  section h2 { margin: 0 0 6px 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
   .row { display: flex; align-items: center; gap: 8px; }
   #phone-input {
-    flex: 1; padding: 10px; font-size: 22px;
+    flex: 1; padding: 8px 10px; font-size: 22px;
     border-radius: 6px; border: 1px solid #555;
     background: #11111c; color: white;
     letter-spacing: 1px; outline: none;
   }
   .btn-primary {
     background: var(--accent-strong); color: white;
-    padding: 10px 16px; font-size: 16px;
-    border: 0; border-radius: 6px;
+    padding: 10px 14px; font-size: 16px;
+    border: 0; border-radius: 6px; font-weight: bold;
   }
-  .link-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .link-row { display: flex; gap: 8px; }
   .link-row a {
     flex: 1; text-align: center;
     background: var(--key); color: white; text-decoration: none;
-    padding: 14px; border-radius: 8px; font-size: 16px;
+    padding: 10px; border-radius: 6px; font-size: 16px;
     border: 1px solid #555;
   }
+  .link-row .wifi-link { background: var(--teal); color: #11111c; font-weight: bold; }
 
   /* Number keyboard */
-  #kb { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }
-  .kb-row { display: flex; gap: 4px; justify-content: center; }
+  #kb { display: flex; flex-direction: column; gap: 4px; margin-top: auto; padding: 0 30px; }
+  .kb-row { display: flex; gap: 6px; justify-content: center; }
   .kb-row button {
-    flex: 1; min-height: 50px; font-size: 22px;
+    flex: 1; height: 50px; font-size: 24px;
     background: var(--key); color: var(--text);
     border: 1px solid #555; border-radius: 6px;
   }
@@ -71,11 +82,11 @@
 
   #toast {
     display: none;
-    position: fixed; left: 50%; bottom: 18px;
+    position: fixed; left: 50%; bottom: 14px;
     transform: translateX(-50%);
-    padding: 10px 16px; border-radius: 8px;
+    padding: 8px 14px; border-radius: 8px;
     background: var(--card);
-    font-size: 16px;
+    font-size: 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
   #toast.show { display: block; }
@@ -83,8 +94,8 @@
 </head>
 <body>
 <header>
-  <h1>Inställningar</h1>
-  <a class="topbtn" href="/">&#8617; Tillbaka</a>
+  <h1>⚙️ Inställningar</h1>
+  <a class="topbtn" href="/">↩ Tillbaka</a>
 </header>
 <main>
   <section>
@@ -96,7 +107,7 @@
   </section>
 
   <section class="link-row">
-    <a href="/wifi-setup">📶 WiFi-inställningar</a>
+    <a class="wifi-link" href="/wifi-setup">📶 Byt WiFi-nätverk</a>
   </section>
 
   <div id="kb"></div>
@@ -106,14 +117,12 @@
 <script>
 const phoneInput = document.getElementById('phone-input');
 const toast = document.getElementById('toast');
-
 function showToast(msg, ms=2500) {
   toast.textContent = msg;
   toast.classList.add('show');
   if (ms) setTimeout(() => toast.classList.remove('show'), ms);
 }
 
-// Numeric keyboard
 const ROWS = [
   ['1','2','3'],
   ['4','5','6'],
@@ -128,11 +137,8 @@ for (const row of ROWS) {
     const b = document.createElement('button');
     b.textContent = k;
     b.addEventListener('click', () => {
-      if (k === '⌫') {
-        phoneInput.value = phoneInput.value.slice(0, -1);
-      } else {
-        phoneInput.value += k;
-      }
+      if (k === '⌫') phoneInput.value = phoneInput.value.slice(0, -1);
+      else phoneInput.value += k;
     });
     div.appendChild(b);
   }
@@ -142,7 +148,7 @@ for (const row of ROWS) {
 document.getElementById('save-btn').addEventListener('click', async () => {
   const phone = phoneInput.value.trim();
   if (!phone) { showToast('Tomt nummer'); return; }
-  showToast('Sparar...', 0);
+  showToast('Sparar…', 0);
   try {
     const res = await fetch('/api/phone', {
       method: 'PUT',
