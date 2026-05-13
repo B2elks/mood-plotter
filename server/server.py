@@ -13,6 +13,7 @@ import card_store
 import config
 import elks_handler
 import image_pipeline
+import phone_state
 import templates
 import tts_cache
 import voice_butler
@@ -79,7 +80,7 @@ async def _start_call(app, dry_run: bool = False) -> tuple[int, dict]:
     app["pending_calls"][call_id] = {"state": "calling"}
 
     if config.DRY_RUN or dry_run:
-        log.info("[DRY_RUN] skulle ringa %s, call_id=%s", config.USER_PHONE_NUMBER, call_id)
+        log.info("[DRY_RUN] skulle ringa, call_id=%s", call_id)
         return 200, {"call_id": call_id, "dry_run": True}
 
     # Anvand WS-Voice-routing om WS_CONNECT_NUMBER ar satt (realtidsljud),
@@ -89,11 +90,12 @@ async def _start_call(app, dry_run: bool = False) -> tuple[int, dict]:
     else:
         voice_start = f"{config.SERVER_PUBLIC_URL}/elks/answer?call_id={call_id}"
 
+    to_number = phone_state.get_phone(config.PHONE_STATE, config.USER_PHONE_NUMBER)
     elks_id = await elks_handler.initiate_call(
         api_username=config.ELKS_API_USERNAME,
         api_password=config.ELKS_API_PASSWORD,
         from_number=config.ELKS_FROM_NUMBER,
-        to_number=config.USER_PHONE_NUMBER,
+        to_number=to_number,
         voice_start_url=voice_start,
         whenhangup_url=f"{config.SERVER_PUBLIC_URL}/elks/hangup?call_id={call_id}",
     )
@@ -111,6 +113,26 @@ async def trigger_handler(request):
         return web.Response(status=401, text="unauthorized")
     status, body = await _start_call(request.app)
     return web.json_response(body, status=status)
+
+
+async def phone_get_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    phone = phone_state.get_phone(config.PHONE_STATE, config.USER_PHONE_NUMBER)
+    return web.json_response({"phone": phone})
+
+
+async def phone_set_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    data = await request.json()
+    raw = (data or {}).get("phone", "")
+    try:
+        normalized = phone_state.set_phone(config.PHONE_STATE, raw)
+    except ValueError as e:
+        return web.json_response({"ok": False, "error": str(e)}, status=400)
+    log.info("phone-state uppdaterat till %s", normalized)
+    return web.json_response({"ok": True, "phone": normalized})
 
 
 async def elks_answer_handler(request):
@@ -339,6 +361,8 @@ def create_app():
     app.router.add_post("/admin/trigger", admin_trigger_handler)
     app.router.add_get("/cards/{name}", cards_handler)
     app.router.add_post("/trigger", trigger_handler)
+    app.router.add_get("/api/phone", phone_get_handler)
+    app.router.add_put("/api/phone", phone_set_handler)
     app.router.add_get("/elks/answer", elks_answer_handler)
     app.router.add_post("/elks/answer", elks_answer_handler)
     app.router.add_get("/elks/after_play", elks_after_play_handler)
