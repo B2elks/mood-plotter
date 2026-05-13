@@ -11,7 +11,7 @@ Environment=WLR_BACKENDS=drm
 Environment=WLR_NO_HARDWARE_CURSORS=1
 # Cage = minimal Wayland-compositor som korar EN app fullskarm utan WM.
 # Chromium i kiosk-lage pekar pa lokala Flask-appen.
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium-browser \
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
     --kiosk \
     --noerrdialogs \
     --disable-infobars \

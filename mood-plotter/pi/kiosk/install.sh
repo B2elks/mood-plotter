@@ -8,10 +8,11 @@ if [[ "${EUID}" -eq 0 ]]; then
   exit 1
 fi
 
-# === Paket: Chromium + Cage + ffmpeg (for plotter_client SVG-prep) ===
+# === Paket: Chromium + Cage ===
+# Pi OS Trixie/Bookworm: paketet heter "chromium" (inte chromium-browser).
 sudo apt-get update
 sudo apt-get install -y \
-  chromium-browser \
+  chromium \
   cage \
   python3-venv \
   python3-pip \

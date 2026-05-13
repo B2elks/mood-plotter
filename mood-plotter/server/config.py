@@ -36,3 +36,4 @@ BASE_DIR = Path(__file__).parent
 AUDIO_DIR = BASE_DIR / "audio"
 CARDS_DIR = BASE_DIR / "cards"
 COOLDOWN_DB = BASE_DIR / "cooldown.db"
+PHONE_STATE = BASE_DIR / "phone_state.json"
