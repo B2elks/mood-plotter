@@ -1,5 +1,5 @@
 [Unit]
-Description=Mood Plotter — Chromium-kiosk pa LCD:n
+Description=Mood Plotter — Sway-kiosk pa LCD:n
 After=mood-plotter-wifi.service graphical.target
 Wants=mood-plotter-wifi.service
 
@@ -17,34 +17,13 @@ StandardError=journal
 UtmpIdentifier=tty1
 UtmpMode=user
 Environment=XDG_RUNTIME_DIR=/run/user/1000
-# Lat wlroots ladda default-backenden (drm + libinput) — INTE bara drm.
-# Den gamla "WLR_BACKENDS=drm" stangde av libinput, sa touch funkade aldrig.
 Environment=WLR_NO_HARDWARE_CURSORS=1
 Environment=XDG_SEAT=seat0
 Environment=XDG_VTNR=1
-# Tomt cursor-tema sa muspekaren inte ritas (touchskarm, ingen mus).
-Environment=XCURSOR_THEME=blank
-Environment=XCURSOR_SIZE=1
-# Cage = minimal Wayland-compositor som korar EN app fullskarm utan WM.
-# Chromium i kiosk-lage pekar pa lokala Flask-appen.
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
-    --kiosk \
-    --noerrdialogs \
-    --disable-infobars \
-    --disable-translate \
-    --no-first-run \
-    --start-fullscreen \
-    --check-for-update-interval=31536000 \
-    --overscroll-history-navigation=0 \
-    --disable-pinch \
-    --disable-features=TranslateUI \
-    --hide-scrollbars \
-    --autoplay-policy=no-user-gesture-required \
-    --ozone-platform=wayland \
-    --enable-features=UseOzonePlatform \
-    --touch-events=enabled \
-    --window-size=800,480 \
-    http://127.0.0.1:5000/
+# Sway istallet for cage: sway har 'seat * hide_cursor 0' som
+# definitivt doljer muspekaren. Cage saknar den featuren och dess
+# default-cursor-fallback gick inte att doverstyra via XCURSOR_THEME.
+ExecStart=/usr/bin/sway -c /home/pi/mood-plotter/pi/kiosk/sway-kiosk.conf
 Restart=on-failure
 RestartSec=5
 
