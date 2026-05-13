@@ -175,5 +175,12 @@ def api_phone_set():
     return jsonify(body), status if status > 0 else 502
 
 
+@app.route("/api/cards/recent")
+def api_cards_recent():
+    """Proxar till servern (samma origin som kiosk-sidan, ingen CORS)."""
+    status, body = _server_request("GET", "/api/cards/recent")
+    return jsonify(body), status if status > 0 else 502
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
