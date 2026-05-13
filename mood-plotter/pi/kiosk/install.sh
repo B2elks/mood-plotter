@@ -39,6 +39,9 @@ sudo cp pi/kiosk/99-waveshare-touch.rules /etc/udev/rules.d/
 sudo udevadm control --reload
 sudo udevadm trigger
 
+# === Blank cursor-tema sa muspekaren inte ritas ===
+bash pi/kiosk/install_blank_cursor.sh
+
 # === seatd: behovs av cage for TTY/seat-access ===
 sudo apt-get install -y seatd
 sudo systemctl enable --now seatd

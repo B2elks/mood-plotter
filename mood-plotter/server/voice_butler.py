@@ -15,12 +15,14 @@ Användarens svar: "{user_response}"
 
 Returnera ENDAST följande JSON-objekt, inget annat:
 {{
-  "image_prompt": "<en kort engelsk DALL·E-prompt för en uppmuntrande, lugn, vacker bild som muntrar upp någon i detta humör. Tydliga konturer, minimal skuggning, lämplig för pen plotter.>",
+  "image_prompt": "<an English prompt for image generation. The image MUST be a MINIMAL BLACK INK LINE DRAWING on pure WHITE background — like a hand-drawn sketch made with a single fountain pen. ABSOLUTELY no shading, no hatching, no gradients, no fill, no color, no grayscale, no thick areas. Just clean thin black outlines like a vector illustration suitable for a pen-plotter. The motif should be simple, recognizable, and emotionally uplifting given the user's mood — examples: a single tree on a hill, a curled-up cat, a teacup with steam, a flower in a vase, a paper boat on a wave. Keep composition simple. Always end the prompt with: ', minimalist black line drawing on white, single thin pen stroke, no shading, suitable for AxiDraw pen plotter'.>",
   "butler_ack": "<1-2 meningar svensk butler-replik. Erkänn humöret mjukt, meddela att kortet är på väg. Tilltala alltid 'min herre' eller 'herrn'.>"
 }}"""
 
 FALLBACK = (
-    "a peaceful watercolor landscape with soft hills and a single tree, line drawing",
+    "a single tree on a small hill with two birds in the sky, "
+    "minimalist black line drawing on white, single thin pen stroke, "
+    "no shading, suitable for AxiDraw pen plotter",
     "Här min herre, ett mood-kort till er. Hoppas dagen blir vacker.",
 )
 
