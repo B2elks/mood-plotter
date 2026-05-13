@@ -24,7 +24,13 @@ DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
 # Tillåt samtal även när ingen plotter är ansluten via WS (för server-only-läge).
 ALLOW_NO_PLOTTER = os.environ.get("ALLOW_NO_PLOTTER", "false").lower() == "true"
 
+# 46elks WS-anslutet "voice number" som routar samtalet till var WS-handler.
+# Konfigureras via 46elks API: numrets ws_url ska peka pa ws://server:PORT/ws-voice
+WS_CONNECT_NUMBER = os.environ.get("WS_CONNECT_NUMBER", "")
+
 PORT = int(os.environ.get("PORT", "8095"))
+# Separat port for raw WS-trafik fran 46elks (utanfor nginx).
+WS_VOICE_PORT = int(os.environ.get("WS_VOICE_PORT", "8121"))
 
 BASE_DIR = Path(__file__).parent
 AUDIO_DIR = BASE_DIR / "audio"
