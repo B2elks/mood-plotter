@@ -38,13 +38,17 @@ def png_to_svg(png_bytes: bytes) -> str:
         svg_path = tmp_path / "out.svg"
         png_path.write_bytes(png_bytes)
 
-        # Layout centrerar pa 10x10 cm fyrkantig sida — passar A6 med marginal
-        # och ger samma kanvasstorlek aven nar bilden ej ar kvadratisk.
+        # Aggressiv forenkling for renare plotterskissar:
+        # - linemerge 2mm slar ihop nara linjer
+        # - filter --min-length 4mm tar bort knottriga sma fragment
+        # - linesimplify 0.5mm ger fortfarande mjuka kurvor utan brus
         cmd = [
             "vpype",
             "iread", str(png_path),
-            "linemerge", "--tolerance", "0.5mm",
-            "linesimplify", "--tolerance", "0.2mm",
+            "linemerge", "--tolerance", "2mm",
+            "filter", "--min-length", "4mm",
+            "linesimplify", "--tolerance", "0.5mm",
+            "linesort",
             "layout", "--align", "center", "--valign", "center", "10cmx10cm",
             "write", str(svg_path),
         ]

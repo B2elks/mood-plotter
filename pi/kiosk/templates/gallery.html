@@ -99,9 +99,20 @@
     object-fit: contain;
     background: white;
     border-radius: 3px;
-    opacity: 0.7;
+    opacity: 0.85;
     padding: 4px;
     box-sizing: border-box;
+    /* Sakerstall klickbarhet pa touch — annars overlappade ev. fab-knappar
+       eller default-pointer-events-tolkning hindrar tap-evenemang. */
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255,0,255,0.4);
+    flex-shrink: 0;
+  }
+  .thumb:active {
+    opacity: 1;
+    transform: scale(0.92);
+    box-shadow: 0 0 8px rgba(255,0,255,0.7);
   }
 
   .fab {
@@ -263,10 +274,15 @@ async function loadCards() {
     const older = (cards || []).slice(isPending ? 0 : 1, isPending ? 6 : 7);
     thumbsEl.innerHTML = '';
     for (const c of older) {
+      const svgName = c.svg;  // capture i lokal var sa closure inte fastnar pa loop-var
       const t = document.createElement('img');
       t.className = 'thumb';
-      t.src = `${SERVER}/cards/${encodeURIComponent(c.svg)}`;
-      t.addEventListener('click', () => openModal(c.svg));
+      t.src = `${SERVER}/cards/${encodeURIComponent(svgName)}`;
+      // Bade click och touchend — vissa touchskarmar levererar inte click
+      // konsekvent nar element ar ett <img>.
+      const open = (e) => { e.preventDefault(); e.stopPropagation(); openModal(svgName); };
+      t.addEventListener('click', open);
+      t.addEventListener('touchend', open);
       thumbsEl.appendChild(t);
     }
   } catch (e) {
