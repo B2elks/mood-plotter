@@ -24,6 +24,10 @@ ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
     --disable-features=TranslateUI \
     --hide-scrollbars \
     --autoplay-policy=no-user-gesture-required \
+    --ozone-platform=wayland \
+    --enable-features=UseOzonePlatform \
+    --touch-events=enabled \
+    --window-size=800,480 \
     http://127.0.0.1:5000/
 Restart=on-failure
 RestartSec=5
