@@ -282,6 +282,21 @@ async def gallery_handler(request):
     return web.Response(text=html_str, content_type="text/html")
 
 
+async def api_cards_recent_handler(request):
+    """Publik JSON-lista over senaste korten (for kiosk-anvandning utan iframe)."""
+    cards = card_store.list_cards(config.CARDS_DIR)[:12]
+    return web.json_response([
+        {
+            "call_id": c.call_id,
+            "png": c.png_name,
+            "svg": c.svg_name,
+            "timestamp": c.timestamp,
+            "iso": c.iso_time,
+        }
+        for c in cards
+    ])
+
+
 async def admin_handler(request):
     if not _check_admin_auth(request):
         return _admin_unauthorized()
@@ -357,6 +372,7 @@ def create_app():
     )
 
     app.router.add_get("/", gallery_handler)
+    app.router.add_get("/api/cards/recent", api_cards_recent_handler)
     app.router.add_get("/admin", admin_handler)
     app.router.add_post("/admin/trigger", admin_trigger_handler)
     app.router.add_get("/cards/{name}", cards_handler)
