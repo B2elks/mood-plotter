@@ -90,6 +90,32 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
   #toast.show { display: block; }
+
+  /* PIR toggle */
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .switch-label { font-size: 18px; }
+  .switch {
+    position: relative; display: inline-block;
+    width: 72px; height: 38px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0;
+    background: #555; border-radius: 38px;
+    transition: 0.15s;
+  }
+  .slider::before {
+    content: ""; position: absolute;
+    height: 30px; width: 30px;
+    left: 4px; bottom: 4px;
+    background: white; border-radius: 50%;
+    transition: 0.15s;
+  }
+  input:checked + .slider { background: var(--accent-strong); }
+  input:checked + .slider::before { transform: translateX(34px); }
 </style>
 </head>
 <body>
@@ -103,6 +129,16 @@
     <div class="row">
       <input id="phone-input" type="tel" value="{{ current_phone }}" inputmode="tel" autocomplete="off">
       <button id="save-btn" class="btn-primary">Spara</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="switch-row">
+      <span class="switch-label">📡 PIR-sensor (automatiska samtal)</span>
+      <label class="switch">
+        <input id="pir-toggle" type="checkbox" {% if pir_enabled %}checked{% endif %}>
+        <span class="slider"></span>
+      </label>
     </div>
   </section>
 
@@ -144,6 +180,27 @@ for (const row of ROWS) {
   }
   kb.appendChild(div);
 }
+
+document.getElementById('pir-toggle').addEventListener('change', async (e) => {
+  const enabled = e.target.checked;
+  try {
+    const res = await fetch('/api/pir', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({enabled}),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast(enabled ? 'PIR påslagen 📡' : 'PIR avslagen');
+    } else {
+      showToast('Fel: ' + (data.error || res.status));
+      e.target.checked = !enabled;
+    }
+  } catch (err) {
+    showToast('Fel: ' + err.message);
+    e.target.checked = !enabled;
+  }
+});
 
 document.getElementById('save-btn').addEventListener('click', async () => {
   const phone = phoneInput.value.trim();

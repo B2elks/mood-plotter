@@ -121,9 +121,13 @@ def wifi_setup():
 
 @app.route("/settings")
 def settings():
-    status, body = _server_request("GET", "/api/phone")
-    current = body.get("phone", "") if status == 200 else ""
-    return render_template("settings.html", current_phone=current)
+    s1, body1 = _server_request("GET", "/api/phone")
+    current = body1.get("phone", "") if s1 == 200 else ""
+    s2, body2 = _server_request("GET", "/api/pir")
+    pir_enabled = bool(body2.get("enabled", True)) if s2 == 200 else True
+    return render_template(
+        "settings.html", current_phone=current, pir_enabled=pir_enabled,
+    )
 
 
 # WiFi-API
@@ -158,7 +162,22 @@ def api_connect():
 
 @app.route("/api/trigger", methods=["POST"])
 def api_trigger():
-    status, body = _server_request("POST", "/trigger", body={"pi_id": "kiosk"})
+    status, body = _server_request(
+        "POST", "/trigger", body={"pi_id": "kiosk", "source": "manual"}
+    )
+    return jsonify(body), status if status > 0 else 502
+
+
+@app.route("/api/pir", methods=["GET"])
+def api_pir_get():
+    status, body = _server_request("GET", "/api/pir")
+    return jsonify(body), status if status > 0 else 502
+
+
+@app.route("/api/pir", methods=["PUT"])
+def api_pir_set():
+    data = request.get_json(silent=True) or {}
+    status, body = _server_request("PUT", "/api/pir", body={"enabled": bool(data.get("enabled"))})
     return jsonify(body), status if status > 0 else 502
 
 
