@@ -143,12 +143,11 @@
   </section>
 
   <section>
-    <div class="switch-row">
+    <div class="switch-row" id="pir-row">
       <span class="switch-label">📡 PIR-sensor (automatiska samtal)</span>
-      <label class="switch">
-        <input id="pir-toggle" type="checkbox" {% if pir_enabled %}checked{% endif %}>
-        <span class="slider"></span>
-      </label>
+      <button id="pir-btn" class="topbtn" style="min-width: 120px; padding: 12px 18px; font-size: 18px;">
+        {% if pir_enabled %}PÅ{% else %}AV{% endif %}
+      </button>
     </div>
   </section>
 
@@ -191,24 +190,35 @@ for (const row of ROWS) {
   kb.appendChild(div);
 }
 
-document.getElementById('pir-toggle').addEventListener('change', async (e) => {
-  const enabled = e.target.checked;
+const pirBtn = document.getElementById('pir-btn');
+let pirEnabled = pirBtn.textContent.trim() === 'PÅ';
+function updatePirBtn() {
+  pirBtn.textContent = pirEnabled ? 'PÅ' : 'AV';
+  pirBtn.style.background = pirEnabled ? 'var(--accent-strong)' : 'var(--card)';
+  pirBtn.style.color = 'white';
+  pirBtn.style.fontWeight = 'bold';
+}
+updatePirBtn();
+
+pirBtn.addEventListener('click', async () => {
+  const target = !pirEnabled;
+  showToast(target ? 'Slår på PIR…' : 'Stänger av PIR…', 0);
   try {
     const res = await fetch('/api/pir', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({enabled}),
+      body: JSON.stringify({enabled: target}),
     });
     const data = await res.json();
     if (res.ok) {
-      showToast(enabled ? 'PIR påslagen 📡' : 'PIR avslagen');
+      pirEnabled = !!data.enabled;
+      updatePirBtn();
+      showToast(pirEnabled ? '📡 PIR påslagen' : '📡 PIR avstängd');
     } else {
       showToast('Fel: ' + (data.error || res.status));
-      e.target.checked = !enabled;
     }
   } catch (err) {
     showToast('Fel: ' + err.message);
-    e.target.checked = !enabled;
   }
 });
 

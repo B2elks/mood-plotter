@@ -38,16 +38,14 @@ def png_to_svg(png_bytes: bytes) -> str:
         svg_path = tmp_path / "out.svg"
         png_path.write_bytes(png_bytes)
 
-        # Aggressiv forenkling for renare plotterskissar:
-        # - linemerge 2mm slar ihop nara linjer
-        # - filter --min-length 4mm tar bort knottriga sma fragment
-        # - linesimplify 0.5mm ger fortfarande mjuka kurvor utan brus
+        # Moderat forenkling — mal: ~10-25 linjer, 5-30 sek att plotta.
+        # Inte for aggressivt (forsta varianten gav 3-5 linjer = trakigt).
         cmd = [
             "vpype",
             "iread", str(png_path),
-            "linemerge", "--tolerance", "2mm",
-            "filter", "--min-length", "4mm",
-            "linesimplify", "--tolerance", "0.5mm",
+            "linemerge", "--tolerance", "0.8mm",
+            "filter", "--min-length", "2mm",
+            "linesimplify", "--tolerance", "0.3mm",
             "linesort",
             "layout", "--align", "center", "--valign", "center", "10cmx10cm",
             "write", str(svg_path),
