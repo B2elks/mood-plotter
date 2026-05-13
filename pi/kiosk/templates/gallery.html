@@ -52,11 +52,12 @@
     box-shadow: 0 0 18px rgba(255,0,255,0.4), 0 0 6px white;
     background: white;
     border-radius: 4px;
-    /* SVG renderas direkt — fixa hojd sa den fyller ut box-shadow-rutan */
     height: 100%;
     padding: 8px;
     box-sizing: border-box;
+    cursor: pointer;
   }
+  .thumb { cursor: pointer; }
   #no-card {
     color: var(--text-dim);
     font-size: 22px;
@@ -149,6 +150,34 @@
     z-index: 20;
   }
   #toast.show { display: block; }
+
+  /* Modal / lightbox vid tap pa kort */
+  #modal {
+    display: none;
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 12px;
+  }
+  #modal.show { display: flex; }
+  #modal img {
+    max-width: 100%; max-height: 100%;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 0 24px rgba(255,0,255,0.5);
+    padding: 12px;
+    box-sizing: border-box;
+  }
+  #modal-close {
+    position: absolute; top: 6px; right: 6px;
+    width: 52px; height: 52px;
+    background: rgba(255,0,0,0.85);
+    border: 3px solid white;
+    border-radius: 50%;
+    color: white; font-size: 26px; font-weight: bold;
+    z-index: 110;
+  }
 </style>
 </head>
 <body>
@@ -165,6 +194,11 @@
 <a id="wifi-btn" class="fab" href="/wifi-setup">📶</a>
 <button id="call-btn" class="fab" title="Ring nu">📞</button>
 <div id="toast"></div>
+
+<div id="modal">
+  <button id="modal-close">✕</button>
+  <img id="modal-img" alt="">
+</div>
 
 <script>
 const SERVER = "{{ gallery_url }}".replace(/\/+$/, "");
@@ -232,12 +266,28 @@ async function loadCards() {
       const t = document.createElement('img');
       t.className = 'thumb';
       t.src = `${SERVER}/cards/${encodeURIComponent(c.svg)}`;
+      t.addEventListener('click', () => openModal(c.svg));
       thumbsEl.appendChild(t);
     }
   } catch (e) {
     // tyst — vi forsoker igen om 5 sek
   }
 }
+
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modal-img');
+function openModal(svgName) {
+  modalImg.src = `${SERVER}/cards/${encodeURIComponent(svgName)}`;
+  modal.classList.add('show');
+}
+function closeModal() { modal.classList.remove('show'); }
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+latestImg.addEventListener('click', () => {
+  if (lastPng) openModal(lastPng);
+});
 
 document.getElementById('call-btn').addEventListener('click', async () => {
   showToast('Ringer…', 0);
