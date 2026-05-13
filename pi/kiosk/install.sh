@@ -34,6 +34,15 @@ if ! sudo grep -q "NOPASSWD: /usr/bin/nmcli" /etc/sudoers.d/mood-plotter 2>/dev/
   sudo chmod 440 /etc/sudoers.d/mood-plotter
 fi
 
+# === Udev: tving FT5x06-touch att synas som touchscreen for libinput ===
+sudo cp pi/kiosk/99-waveshare-touch.rules /etc/udev/rules.d/
+sudo udevadm control --reload
+sudo udevadm trigger
+
+# === seatd: behovs av cage for TTY/seat-access ===
+sudo apt-get install -y seatd
+sudo systemctl enable --now seatd
+
 # === Systemd-units ===
 sudo cp pi/kiosk/mood-plotter-wifi.service /etc/systemd/system/
 sudo cp pi/kiosk/mood-plotter-kiosk.service /etc/systemd/system/
