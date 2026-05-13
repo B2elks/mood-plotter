@@ -52,6 +52,10 @@
     box-shadow: 0 0 18px rgba(255,0,255,0.4), 0 0 6px white;
     background: white;
     border-radius: 4px;
+    /* SVG renderas direkt — fixa hojd sa den fyller ut box-shadow-rutan */
+    height: 100%;
+    padding: 8px;
+    box-sizing: border-box;
   }
   #no-card {
     color: var(--text-dim);
@@ -90,11 +94,13 @@
     border-top: 1px solid rgba(255,255,255,0.1);
   }
   .thumb {
-    height: 76px; width: auto;
+    height: 76px; width: 76px;
     object-fit: contain;
     background: white;
     border-radius: 3px;
     opacity: 0.7;
+    padding: 4px;
+    box-sizing: border-box;
   }
 
   .fab {
@@ -210,9 +216,9 @@ async function loadCards() {
         thumbsEl.innerHTML = '';
         return;
       }
-      if (newest.png !== lastPng) {
-        lastPng = newest.png;
-        latestImg.src = `${SERVER}/cards/${encodeURIComponent(newest.png)}`;
+      if (newest.svg !== lastPng) {
+        lastPng = newest.svg;
+        latestImg.src = `${SERVER}/cards/${encodeURIComponent(newest.svg)}`;
         timeEl.textContent = fmtTime(newest.iso);
       }
       latestImg.style.display = 'block';
@@ -225,7 +231,7 @@ async function loadCards() {
     for (const c of older) {
       const t = document.createElement('img');
       t.className = 'thumb';
-      t.src = `${SERVER}/cards/${encodeURIComponent(c.png)}`;
+      t.src = `${SERVER}/cards/${encodeURIComponent(c.svg)}`;
       thumbsEl.appendChild(t);
     }
   } catch (e) {
