@@ -181,6 +181,20 @@ def api_pir_set():
     return jsonify(body), status if status > 0 else 502
 
 
+@app.route("/api/poweroff", methods=["POST"])
+def api_poweroff():
+    """Stang av Pi:n. Kraver sudoers-regel for /usr/sbin/shutdown."""
+    subprocess.Popen(["sudo", "/usr/sbin/shutdown", "-h", "+0"])
+    return jsonify({"ok": True})
+
+
+@app.route("/api/reboot", methods=["POST"])
+def api_reboot():
+    """Starta om Pi:n."""
+    subprocess.Popen(["sudo", "/usr/sbin/reboot"])
+    return jsonify({"ok": True})
+
+
 @app.route("/api/phone", methods=["GET"])
 def api_phone_get():
     status, body = _server_request("GET", "/api/phone")

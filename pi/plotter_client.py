@@ -14,24 +14,21 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(mes
 log = logging.getLogger("plotter-client")
 
 
-def connect_axidraw():
-    ad = axidraw.AxiDraw()
-    ad.interactive()
-    while not ad.connect():
-        log.warning("AxiDraw inte ansluten — försöker igen om 5s")
-        time.sleep(5)
-    ad.options.pen_pos_down = config.AXIDRAW_PEN_POS_DOWN
-    ad.options.pen_pos_up = config.AXIDRAW_PEN_POS_UP
-    ad.options.speed_pendown = config.AXIDRAW_SPEED_PENDOWN
-    return ad
+def plot_svg(svg_text: str):
+    """En plot = en farsk AxiDraw-anslutning. Robust mot trasiga USB-state
+    mellan korten (gamla varianten holl 'ad' for evigt och fick I/O-fel).
 
-
-def plot_svg(ad, svg_text: str):
+    plot_setup/plot_run-varianten oppnar och stanger USB-handeln internt.
+    """
     with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as f:
         f.write(svg_text.encode())
         svg_path = f.name
     try:
+        ad = axidraw.AxiDraw()
         ad.plot_setup(svg_path)
+        ad.options.pen_pos_down = config.AXIDRAW_PEN_POS_DOWN
+        ad.options.pen_pos_up = config.AXIDRAW_PEN_POS_UP
+        ad.options.speed_pendown = config.AXIDRAW_SPEED_PENDOWN
         ad.options.preview = False
         ad.plot_run()
         log.info("Plot klar")
@@ -40,16 +37,14 @@ def plot_svg(ad, svg_text: str):
 
 
 def run():
-    ad = connect_axidraw()
+    log.info("Plotter-klient startad, vantar pa SVG via WS")
     backoff = 1
 
     while True:
         try:
             ws = websocket.create_connection(
                 config.SERVER_WS_URL,
-                # ping/pong-keepalive sa anslutningen inte timeoutar tystt
                 ping_interval=20, ping_timeout=10,
-                # ingen lasningstimeout — vi vill blockera tills server skickar
                 timeout=None,
             )
             log.info("WS ansluten")
@@ -68,10 +63,14 @@ def run():
                 if msg.get("method") == "plot":
                     log.info("SVG mottagen, %d tecken — plottar", len(msg.get("svg", "")))
                     try:
-                        plot_svg(ad, msg["svg"])
+                        plot_svg(msg["svg"])
                     except Exception as e:
                         log.exception("Plot-fel: %s", e)
-                    ws.send(json.dumps({"method": "ready"}))
+                    try:
+                        ws.send(json.dumps({"method": "ready"}))
+                    except Exception:
+                        # broken pipe — vi reconnectar pa nasta iteration
+                        break
         except Exception as e:
             log.error("WS-fel: %s — reconnect om %ds", e, backoff)
             time.sleep(backoff)
