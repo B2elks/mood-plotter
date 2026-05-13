@@ -110,6 +110,9 @@ class _FakeResp:
 
 
 class _FakeSession:
+    def __init__(self, *a, **kw):
+        pass
+
     async def __aenter__(self):
         return self
 
@@ -121,8 +124,10 @@ class _FakeSession:
 
 
 @pytest.mark.asyncio
-async def test_elks_recording_returns_personalized_ack_url(client, monkeypatch):
-    """Regression: recording response must point at ack_<call_id>.mp3, not fallback."""
+async def test_elks_play_ack_returns_personalized_ack_url(client, monkeypatch):
+    """Regression: /elks/play_ack must return the personalized ack URL after
+    the recording-pipeline has set it. Recording-response itself is empty
+    (46elks ignores it)."""
     from voice_butler import ButlerResult
 
     monkeypatch.setattr(
@@ -143,20 +148,33 @@ async def test_elks_recording_returns_personalized_ack_url(client, monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "image_pipeline.generate_svg",
-        lambda prompt, api_key: "<svg/>",
+        "image_pipeline.generate_png",
+        lambda prompt, api_key: b"PNG",
     )
-    # Avoid real HTTP fetch of the recording URL.
-    monkeypatch.setattr("aiohttp.ClientSession", lambda: _FakeSession())
+    monkeypatch.setattr(
+        "image_pipeline.png_to_svg",
+        lambda png: "<svg/>",
+    )
+    monkeypatch.setattr("aiohttp.ClientSession", lambda **kw: _FakeSession())
 
-    resp = await client.post(
+    # Prime pending_calls (normally done by /trigger).
+    client.app["pending_calls"]["abc"] = {"state": "calling"}
+
+    # Simulate the after_play step first — it creates the ack_event.
+    after_resp = await client.get("/elks/after_play?call_id=abc")
+    assert after_resp.status == 200
+
+    # Then recording arrives — populates ack_url, sets event.
+    rec_resp = await client.post(
         "/elks/recording?call_id=abc",
-        data={"recordurl": "https://example.com/r.wav"},
+        data={"wav": "https://example.com/r.wav"},
     )
-    body = await resp.json()
-    assert "ack_abc.mp3" in body["play"], (
-        f"Expected personalized ack URL but got {body['play']}"
-    )
+    assert rec_resp.status == 200
+
+    # /elks/play_ack should now return the personalized URL.
+    ack_resp = await client.get("/elks/play_ack?call_id=abc")
+    body = await ack_resp.json()
+    assert "ack_abc.mp3" in body["play"]
 
 
 # Gallery / admin / cards routes (post-server-only-mode addition)

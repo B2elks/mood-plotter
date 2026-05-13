@@ -1,5 +1,6 @@
 aiohttp==3.9.5
-openai==1.30.0
+openai>=1.50.0
+httpx<0.28
 elevenlabs==1.2.2
 vpype==1.14
 vpype-vectrace==0.1.2
