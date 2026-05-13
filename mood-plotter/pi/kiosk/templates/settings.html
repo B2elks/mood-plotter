@@ -155,6 +155,11 @@
     <a class="wifi-link" href="/wifi-setup">📶 Byt WiFi-nätverk</a>
   </section>
 
+  <section class="link-row">
+    <button id="reboot-btn" class="topbtn" style="flex:1; padding: 12px; font-size: 15px;">🔄 Starta om</button>
+    <button id="poweroff-btn" style="flex:1; padding: 12px; font-size: 15px; background:#c00; color:white; border:0; border-radius:6px; font-weight:bold;">⏻ Stäng av</button>
+  </section>
+
   <div id="kb"></div>
 </main>
 <div id="toast"></div>
@@ -199,6 +204,40 @@ function updatePirBtn() {
   pirBtn.style.fontWeight = 'bold';
 }
 updatePirBtn();
+
+async function confirmAndPost(actionName, url, label) {
+  // Tva-stegs-bekraftelse: knappen byter till "TRYCK IGEN for att <label>"
+  const btn = document.getElementById(actionName + '-btn');
+  if (!btn.dataset.armed) {
+    const orig = btn.textContent;
+    btn.dataset.armed = '1';
+    btn.dataset.orig = orig;
+    btn.textContent = 'Tryck igen för att ' + label;
+    btn.style.background = '#ff6600';
+    btn.style.color = 'white';
+    setTimeout(() => {
+      if (btn.dataset.armed) {
+        btn.textContent = btn.dataset.orig;
+        btn.dataset.armed = '';
+        btn.style.background = '';
+        btn.style.color = '';
+      }
+    }, 5000);
+    return;
+  }
+  btn.dataset.armed = '';
+  showToast(label + '…', 0);
+  try {
+    await fetch(url, {method: 'POST'});
+  } catch (e) {}
+}
+
+document.getElementById('reboot-btn').addEventListener('click', () => {
+  confirmAndPost('reboot', '/api/reboot', 'starta om');
+});
+document.getElementById('poweroff-btn').addEventListener('click', () => {
+  confirmAndPost('poweroff', '/api/poweroff', 'stänga av');
+});
 
 pirBtn.addEventListener('click', async () => {
   const target = !pirEnabled;

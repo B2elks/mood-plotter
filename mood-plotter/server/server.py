@@ -344,6 +344,21 @@ async def admin_trigger_handler(request):
     return web.Response(text=html_str, content_type="text/html", status=status)
 
 
+async def admin_replot_handler(request):
+    """Re-skicka senaste kortets SVG till plottern utan att ringa."""
+    if not _check_admin_auth(request):
+        return _admin_unauthorized()
+    cards = card_store.list_cards(config.CARDS_DIR)
+    if not cards:
+        return web.json_response({"ok": False, "error": "no cards"}, status=404)
+    target = cards[0]
+    svg_path = config.CARDS_DIR / target.svg_name
+    svg = svg_path.read_text()
+    sent = await request.app["ws_dispatcher"].send_svg(svg)
+    log.info("admin replot: %s sent=%s", target.svg_name, sent)
+    return web.json_response({"ok": sent, "svg": target.svg_name})
+
+
 async def ws_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -399,6 +414,7 @@ def create_app():
     app.router.add_get("/api/cards/recent", api_cards_recent_handler)
     app.router.add_get("/admin", admin_handler)
     app.router.add_post("/admin/trigger", admin_trigger_handler)
+    app.router.add_post("/admin/replot", admin_replot_handler)
     app.router.add_get("/cards/{name}", cards_handler)
     app.router.add_post("/trigger", trigger_handler)
     app.router.add_get("/api/phone", phone_get_handler)

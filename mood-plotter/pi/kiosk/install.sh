@@ -27,12 +27,13 @@ fi
 .venv/bin/pip install --quiet --upgrade pip
 .venv/bin/pip install --quiet -r pi/kiosk/requirements.txt
 
-# === Tillat pi att kora nmcli utan losen ===
-SUDOERS_LINE="pi ALL=(ALL) NOPASSWD: /usr/bin/nmcli"
-if ! sudo grep -q "NOPASSWD: /usr/bin/nmcli" /etc/sudoers.d/mood-plotter 2>/dev/null; then
-  echo "${SUDOERS_LINE}" | sudo tee /etc/sudoers.d/mood-plotter > /dev/null
-  sudo chmod 440 /etc/sudoers.d/mood-plotter
-fi
+# === Tillat pi att kora nmcli + shutdown/reboot utan losen ===
+sudo tee /etc/sudoers.d/mood-plotter > /dev/null << 'SUDOERS'
+pi ALL=(ALL) NOPASSWD: /usr/bin/nmcli
+pi ALL=(ALL) NOPASSWD: /usr/sbin/shutdown
+pi ALL=(ALL) NOPASSWD: /usr/sbin/reboot
+SUDOERS
+sudo chmod 440 /etc/sudoers.d/mood-plotter
 
 # === Udev: tving FT5x06-touch att synas som touchscreen for libinput ===
 sudo cp pi/kiosk/99-waveshare-touch.rules /etc/udev/rules.d/
