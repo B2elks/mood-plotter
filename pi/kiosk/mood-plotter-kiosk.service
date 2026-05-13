@@ -1,0 +1,32 @@
+[Unit]
+Description=Mood Plotter — Chromium-kiosk pa LCD:n
+After=mood-plotter-wifi.service graphical.target
+Wants=mood-plotter-wifi.service
+
+[Service]
+Type=simple
+User=pi
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WLR_BACKENDS=drm
+Environment=WLR_NO_HARDWARE_CURSORS=1
+# Cage = minimal Wayland-compositor som korar EN app fullskarm utan WM.
+# Chromium i kiosk-lage pekar pa lokala Flask-appen.
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium-browser \
+    --kiosk \
+    --noerrdialogs \
+    --disable-infobars \
+    --disable-translate \
+    --no-first-run \
+    --start-fullscreen \
+    --check-for-update-interval=31536000 \
+    --overscroll-history-navigation=0 \
+    --disable-pinch \
+    --disable-features=TranslateUI \
+    --hide-scrollbars \
+    --autoplay-policy=no-user-gesture-required \
+    http://127.0.0.1:5000/
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
