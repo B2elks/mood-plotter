@@ -18,9 +18,17 @@ def test_build_answer_response_returns_play_with_next_url():
     }
 
 
-def test_build_record_action_returns_record_url():
-    resp = build_record_action(record_callback="https://example.com/recording")
-    assert resp == {"record": "https://example.com/recording"}
+def test_build_record_action_returns_record_url_and_next():
+    resp = build_record_action(
+        record_callback="https://example.com/recording",
+        next_url="https://example.com/play_ack",
+    )
+    assert resp == {
+        "record": "https://example.com/recording",
+        "next": "https://example.com/play_ack",
+        "silencedetection": "no",
+        "timelimit": 8,
+    }
 
 
 def test_build_record_response_returns_play_only():

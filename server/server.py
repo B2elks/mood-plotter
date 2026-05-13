@@ -120,26 +120,61 @@ async def elks_answer_handler(request):
 
 
 async def elks_after_play_handler(request):
-    """Efter att fragan spelats, be 46elks spela in svaret."""
+    """Efter att fragan spelats, be 46elks spela in svaret.
+
+    Satter aven 'next' till /elks/play_ack — DIT 46elks gar efter att
+    inspelningen postats. Annars hanger 46elks pa direkt och ack-frasen
+    spelas aldrig.
+    """
     call_id = request.query.get("call_id", "")
     record_callback = f"{config.SERVER_PUBLIC_URL}/elks/recording?call_id={call_id}"
-    log.info("call_id=%s after_play -> record till %s", call_id, record_callback)
-    return web.json_response(elks_handler.build_record_action(record_callback))
+    play_ack_url = f"{config.SERVER_PUBLIC_URL}/elks/play_ack?call_id={call_id}"
+
+    # Skapa async-event sa play_ack-handlern kan vanta pa pipelinen.
+    if call_id in request.app["pending_calls"]:
+        request.app["pending_calls"][call_id]["ack_event"] = asyncio.Event()
+        request.app["pending_calls"][call_id]["ack_url"] = None
+
+    log.info(
+        "call_id=%s after_play -> record till %s, next %s",
+        call_id, record_callback, play_ack_url,
+    )
+    return web.json_response(
+        elks_handler.build_record_action(record_callback, play_ack_url)
+    )
 
 
 async def elks_recording_handler(request):
+    """Tar emot inspelningen, kor pipelinen, signalerar play_ack."""
     call_id = request.query.get("call_id", "")
     data = await request.post()
-    recording_url = data.get("recordurl") or data.get("url", "")
-    log.info("call_id=%s inspelning klar: %s", call_id, recording_url)
+    recording_url = data.get("wav", "")
+    duration = data.get("duration", "0")
+    log.info(
+        "call_id=%s inspelning klar (duration=%s): %s",
+        call_id, duration, recording_url,
+    )
 
-    ack_url = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
+    fallback_ack = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
+    pending = request.app["pending_calls"].get(call_id, {})
+
+    if not recording_url:
+        log.warning("call_id=%s ingen wav-URL i recording-callback", call_id)
+        pending["ack_url"] = fallback_ack
+        if "ack_event" in pending:
+            pending["ack_event"].set()
+        return web.Response(text="")
+
     pipeline_payload = None
+    ack_url = fallback_ack
     try:
         import aiohttp as _aiohttp
 
         wav_path = config.AUDIO_DIR / f"rec_{call_id}.wav"
-        async with _aiohttp.ClientSession() as session:
+        auth = _aiohttp.BasicAuth(
+            config.ELKS_API_USERNAME, config.ELKS_API_PASSWORD,
+        )
+        async with _aiohttp.ClientSession(auth=auth) as session:
             async with session.get(recording_url) as resp:
                 wav_path.write_bytes(await resp.read())
 
@@ -170,9 +205,38 @@ async def elks_recording_handler(request):
     except Exception as e:
         log.exception("call_id=%s fel i synchronous pipeline: %s", call_id, e)
 
+    # Signalera till play_ack-handlern att ack-URL ar redo.
+    pending["ack_url"] = ack_url
+    if "ack_event" in pending:
+        pending["ack_event"].set()
+    log.info("call_id=%s ack-URL satt: %s", call_id, ack_url)
+
     if pipeline_payload:
         asyncio.create_task(_generate_and_store(request.app, call_id, pipeline_payload))
 
+    # 46elks ignorerar svaret pa recording-callbacken; ack spelas via play_ack.
+    return web.Response(text="")
+
+
+async def elks_play_ack_handler(request):
+    """46elks anropar denna EFTER recording postats. Vantar pa ack-URL och spelar."""
+    call_id = request.query.get("call_id", "")
+    pending = request.app["pending_calls"].get(call_id, {})
+    fallback = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
+
+    event: asyncio.Event = pending.get("ack_event")
+    if event is None:
+        log.warning("call_id=%s play_ack utan ack_event — fallback", call_id)
+        return web.json_response(elks_handler.build_record_response(fallback))
+
+    try:
+        await asyncio.wait_for(event.wait(), timeout=15)
+    except asyncio.TimeoutError:
+        log.warning("call_id=%s play_ack timeout efter 15s — fallback", call_id)
+        return web.json_response(elks_handler.build_record_response(fallback))
+
+    ack_url = pending.get("ack_url", fallback)
+    log.info("call_id=%s play_ack -> %s", call_id, ack_url)
     return web.json_response(elks_handler.build_record_response(ack_url))
 
 
@@ -303,6 +367,8 @@ def create_app():
     app.router.add_post("/elks/answer", elks_answer_handler)
     app.router.add_get("/elks/after_play", elks_after_play_handler)
     app.router.add_post("/elks/after_play", elks_after_play_handler)
+    app.router.add_get("/elks/play_ack", elks_play_ack_handler)
+    app.router.add_post("/elks/play_ack", elks_play_ack_handler)
     app.router.add_post("/elks/recording", elks_recording_handler)
     app.router.add_get("/elks/hangup", elks_hangup_handler)
     app.router.add_post("/elks/hangup", elks_hangup_handler)

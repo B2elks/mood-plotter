@@ -1,22 +1,40 @@
-"""Generera unik ack-MP3 per samtal via ElevenLabs."""
+"""Generera unik ack-MP3 per samtal via ElevenLabs (direkt REST)."""
+import json
 import logging
+import urllib.request
 from pathlib import Path
-
-from elevenlabs.client import ElevenLabs
 
 log = logging.getLogger(__name__)
 
 
 def _call_elevenlabs(text: str, voice_id: str, api_key: str) -> bytes:
-    """Faktiskt API-anrop. Egen funktion för att kunna mocka i test."""
-    client = ElevenLabs(api_key=api_key)
-    audio_iter = client.generate(
-        text=text,
-        voice=voice_id,
-        model="eleven_multilingual_v2",
-        output_format="mp3_44100_128",
+    """Direkt REST-anrop till ElevenLabs.
+
+    Anvander INTE elevenlabs-SDK:n eftersom dess output (oavsett output_format)
+    ger 'Bad audio data' i 46elks play-action. Bade hangupdemo och oloppnare
+    anvander direkt REST och deras MP3:er funkar.
+    """
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    body = json.dumps({
+        "text": text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+        },
+    }).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={
+            "xi-api-key": api_key,
+            "Content-Type": "application/json",
+            "Accept": "audio/mpeg",
+        },
+        method="POST",
     )
-    return b"".join(audio_iter)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read()
 
 
 def generate_ack_mp3(
