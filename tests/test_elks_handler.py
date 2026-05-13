@@ -31,9 +31,18 @@ def test_build_record_action_returns_record_url_and_next():
     }
 
 
-def test_build_record_response_returns_play_only():
-    resp = build_record_response(play_url="https://example.com/ack.mp3")
-    assert resp == {"play": "https://example.com/ack.mp3"}
+def test_build_record_response_returns_play_with_next():
+    from elks_handler import build_end_response
+
+    resp = build_record_response(
+        play_url="https://example.com/ack.mp3",
+        end_url="https://example.com/end",
+    )
+    assert resp == {
+        "play": "https://example.com/ack.mp3",
+        "next": "https://example.com/end",
+    }
+    assert build_end_response() == {"hangup": ""}
 
 
 def test_build_hangup_response_is_empty_dict():

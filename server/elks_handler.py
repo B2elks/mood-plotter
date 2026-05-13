@@ -31,11 +31,20 @@ def build_record_action(record_callback: str, next_url: str) -> dict:
     }
 
 
-def build_record_response(play_url: str) -> dict:
-    """Svar pa recording-callback: spela ack-fras, sen lagg pa automatiskt."""
+def build_record_response(play_url: str, end_url: str) -> dict:
+    """Svar pa play_ack-callback: spela ack-fras, sen lagg pa via end_url.
+
+    46elks haller samtalet oppet om man inte explicit chainar hangup.
+    """
     return {
         "play": play_url,
+        "next": end_url,
     }
+
+
+def build_end_response() -> dict:
+    """Avsluta samtalet."""
+    return {"hangup": ""}
 
 
 def build_hangup_response() -> dict:
