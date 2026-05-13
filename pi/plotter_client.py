@@ -45,7 +45,13 @@ def run():
 
     while True:
         try:
-            ws = websocket.create_connection(config.SERVER_WS_URL, timeout=30)
+            ws = websocket.create_connection(
+                config.SERVER_WS_URL,
+                # ping/pong-keepalive sa anslutningen inte timeoutar tystt
+                ping_interval=20, ping_timeout=10,
+                # ingen lasningstimeout — vi vill blockera tills server skickar
+                timeout=None,
+            )
             log.info("WS ansluten")
             backoff = 1
 
