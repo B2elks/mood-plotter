@@ -8,12 +8,12 @@ from pathlib import Path
 from aiohttp import web
 
 import card_store
+import categorize
 import config
 import elks_handler
 import image_pipeline
 import templates
 import tts_cache
-import tts_live
 import voice_butler
 from cooldown import Cooldown
 from ws_dispatcher import WSDispatcher
@@ -145,7 +145,11 @@ async def elks_after_play_handler(request):
 
 
 async def elks_recording_handler(request):
-    """Tar emot inspelningen, kor pipelinen, signalerar play_ack."""
+    """Tar emot inspelningen, transkriberar, valjer pre-recorded ack, signalerar.
+
+    Snabbt sync-flode (~Whisper-tid): Whisper -> keyword-kategorisering ->
+    pre-recorded ack-URL. LLM och bildgenerering kors i bakgrund.
+    """
     call_id = request.query.get("call_id", "")
     data = await request.post()
     recording_url = data.get("wav", "")
@@ -155,7 +159,7 @@ async def elks_recording_handler(request):
         call_id, duration, recording_url,
     )
 
-    fallback_ack = f"{config.SERVER_PUBLIC_URL}/audio/ack_fallback.mp3"
+    fallback_ack = f"{config.SERVER_PUBLIC_URL}/audio/ack_neutral.mp3"
     pending = request.app["pending_calls"].get(call_id, {})
 
     if not recording_url:
@@ -165,7 +169,7 @@ async def elks_recording_handler(request):
             pending["ack_event"].set()
         return web.Response(text="")
 
-    pipeline_payload = None
+    text = ""
     ack_url = fallback_ack
     try:
         import aiohttp as _aiohttp
@@ -181,38 +185,24 @@ async def elks_recording_handler(request):
         text = voice_butler.transcribe_audio(wav_path, config.OPENAI_API_KEY)
         log.info("call_id=%s transkribering: %r", call_id, text)
 
-        result = voice_butler.analyze_response(text, config.OPENAI_API_KEY)
-        log.info(
-            "call_id=%s prompt: %s | ack: %s",
-            call_id, result.image_prompt[:60], result.butler_ack[:60],
-        )
-
-        ack_url = tts_live.generate_ack_mp3(
-            text=result.butler_ack,
-            call_id=call_id,
-            audio_dir=config.AUDIO_DIR,
-            public_base_url=config.SERVER_PUBLIC_URL,
-            voice_id=config.ELEVENLABS_VOICE_ID,
-            api_key=config.ELEVENLABS_API_KEY,
-        )
+        category = categorize.categorize(text)
+        ack_url = f"{config.SERVER_PUBLIC_URL}/audio/ack_{category}.mp3"
+        log.info("call_id=%s kategori=%s -> ack=%s", call_id, category, ack_url)
 
         wav_path.unlink(missing_ok=True)
-        pipeline_payload = {
-            "transcription": text,
-            "image_prompt": result.image_prompt,
-            "butler_ack": result.butler_ack,
-        }
     except Exception as e:
-        log.exception("call_id=%s fel i synchronous pipeline: %s", call_id, e)
+        log.exception("call_id=%s fel i sync-pipeline: %s", call_id, e)
 
-    # Signalera till play_ack-handlern att ack-URL ar redo.
+    # Signalera till play_ack-handlern att ack-URL ar redo (sa fort som mojligt).
     pending["ack_url"] = ack_url
     if "ack_event" in pending:
         pending["ack_event"].set()
     log.info("call_id=%s ack-URL satt: %s", call_id, ack_url)
 
-    if pipeline_payload:
-        asyncio.create_task(_generate_and_store(request.app, call_id, pipeline_payload))
+    # I bakgrunden: LLM tar fram image-prompt, sen DALL-E + vpype + spara kort.
+    asyncio.create_task(
+        _generate_and_store(request.app, call_id, text)
+    )
 
     # 46elks ignorerar svaret pa recording-callbacken; ack spelas via play_ack.
     return web.Response(text="")
@@ -240,19 +230,24 @@ async def elks_play_ack_handler(request):
     return web.json_response(elks_handler.build_record_response(ack_url))
 
 
-async def _generate_and_store(app, call_id: str, meta: dict):
-    """Bakgrund: DALL-E PNG, vpype SVG, spara till cards/, skicka till plotter."""
+async def _generate_and_store(app, call_id: str, transcription: str):
+    """Bakgrund: LLM image-prompt -> DALL-E PNG -> vpype SVG -> spara + plotter."""
     try:
-        png = image_pipeline.generate_png(meta["image_prompt"], config.OPENAI_API_KEY)
+        result = voice_butler.analyze_response(transcription, config.OPENAI_API_KEY)
+        log.info(
+            "call_id=%s image_prompt: %s",
+            call_id, result.image_prompt[:80],
+        )
+        png = image_pipeline.generate_png(result.image_prompt, config.OPENAI_API_KEY)
         svg = image_pipeline.png_to_svg(png)
         card_store.save_card(
             cards_dir=config.CARDS_DIR,
             call_id=call_id,
             png_bytes=png,
             svg_text=svg,
-            transcription=meta.get("transcription", ""),
-            image_prompt=meta.get("image_prompt", ""),
-            butler_ack=meta.get("butler_ack", ""),
+            transcription=transcription,
+            image_prompt=result.image_prompt,
+            butler_ack=result.butler_ack,
         )
         sent = await app["ws_dispatcher"].send_svg(svg)
         log.info("call_id=%s sparat + skickat till plotter: %s", call_id, sent)

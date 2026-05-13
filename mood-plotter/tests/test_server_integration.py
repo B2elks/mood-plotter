@@ -124,27 +124,20 @@ class _FakeSession:
 
 
 @pytest.mark.asyncio
-async def test_elks_play_ack_returns_personalized_ack_url(client, monkeypatch):
-    """Regression: /elks/play_ack must return the personalized ack URL after
-    the recording-pipeline has set it. Recording-response itself is empty
-    (46elks ignores it)."""
+async def test_elks_play_ack_returns_category_ack_url(client, monkeypatch):
+    """/elks/play_ack must return the category-based pre-recorded ack URL
+    after the recording-pipeline has classified the transcription."""
     from voice_butler import ButlerResult
 
     monkeypatch.setattr(
         "voice_butler.transcribe_audio",
-        lambda path, api_key: "trött",
+        lambda path, api_key: "Jag är så trött och utmattad",
     )
     monkeypatch.setattr(
         "voice_butler.analyze_response",
         lambda text, api_key: ButlerResult(
             image_prompt="a peaceful watercolor",
-            butler_ack="Förträffligt min herre",
-        ),
-    )
-    monkeypatch.setattr(
-        "tts_live.generate_ack_mp3",
-        lambda text, call_id, audio_dir, public_base_url, voice_id, api_key: (
-            f"{public_base_url}/audio/ack_{call_id}.mp3"
+            butler_ack="(unused)",
         ),
     )
     monkeypatch.setattr(
@@ -164,17 +157,17 @@ async def test_elks_play_ack_returns_personalized_ack_url(client, monkeypatch):
     after_resp = await client.get("/elks/after_play?call_id=abc")
     assert after_resp.status == 200
 
-    # Then recording arrives — populates ack_url, sets event.
+    # Then recording arrives — categorizes, sets ack_url, signals event.
     rec_resp = await client.post(
         "/elks/recording?call_id=abc",
         data={"wav": "https://example.com/r.wav"},
     )
     assert rec_resp.status == 200
 
-    # /elks/play_ack should now return the personalized URL.
+    # /elks/play_ack should return the 'tired' category ack URL.
     ack_resp = await client.get("/elks/play_ack?call_id=abc")
     body = await ack_resp.json()
-    assert "ack_abc.mp3" in body["play"]
+    assert "ack_tired.mp3" in body["play"]
 
 
 # Gallery / admin / cards routes (post-server-only-mode addition)
