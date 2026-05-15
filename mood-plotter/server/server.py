@@ -184,18 +184,6 @@ async def elks_sms_incoming_handler(request):
         return web.json_response({})
 
     asyncio.create_task(_process_sms_text(request.app, call_id, text))
-
-    # Kvitter direkt
-    try:
-        await elks_handler.send_sms(
-            api_username=config.ELKS_API_USERNAME,
-            api_password=config.ELKS_API_PASSWORD,
-            from_number=config.ELKS_FROM_NUMBER,
-            to_number=from_num,
-            message="Tack min herre. Ett mood-kort ritas och visas pa vaggen inom en minut.",
-        )
-    except Exception as e:
-        log.warning("kunde inte skicka kvittens-SMS: %s", e)
     return web.json_response({})
 
 
