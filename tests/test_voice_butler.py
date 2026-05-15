@@ -30,8 +30,8 @@ def test_analyze_response_parses_json_from_llm():
 
 def test_analyze_response_uses_fallback_on_empty_text():
     result = analyze_response("", api_key="k")
-    assert "line drawing" in result.image_prompt.lower() or "pen plotter" in result.image_prompt.lower()
-    assert "min herre" in result.butler_ack.lower() or "herre" in result.butler_ack.lower()
+    assert "pen plotter" in result.image_prompt.lower() or "monoline" in result.image_prompt.lower()
+    assert "återskapar" in result.butler_ack.lower() or "delar" in result.butler_ack.lower()
 
 
 def test_analyze_response_uses_fallback_on_llm_error():
