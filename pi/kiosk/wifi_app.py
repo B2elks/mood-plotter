@@ -119,6 +119,13 @@ def wifi_setup():
     return render_template("wifi_setup.html")
 
 
+@app.route("/phone")
+def phone_page():
+    status, body = _server_request("GET", "/api/phone")
+    current = body.get("phone", "") if status == 200 else ""
+    return render_template("phone.html", current_phone=current)
+
+
 @app.route("/settings")
 def settings():
     s1, body1 = _server_request("GET", "/api/phone")
