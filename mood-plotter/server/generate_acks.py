@@ -9,10 +9,10 @@ from pathlib import Path
 import config
 
 ACKS = {
-    "neutral_01": "Tack min herre. Ett mood-kort är på väg till er. Håll till godo.",
-    "neutral_02": "Förträffligt. Ett kort sänds härmed. Hoppas det piggar upp dagen.",
-    "neutral_03": "Min herre, tack ska ni ha. Ett kort är på väg. Trevlig dag.",
-    "neutral_04": "Tackar ödmjukast. Mood-kortet anländer inom kort. Håll till godo.",
+    "neutral_01": "Tack för att du delar. Jag återskapar känslan i en bild åt dig.",
+    "neutral_02": "Härligt. Jag återskapar det du beskriver — en bild kommer inom kort.",
+    "neutral_03": "Jag hör dig. Jag återskapar känslan visuellt — håll utkik.",
+    "neutral_04": "Tack! Jag återskapar din känsla i ett kort som ritas just nu.",
 }
 
 

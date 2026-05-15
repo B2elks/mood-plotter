@@ -192,9 +192,12 @@ async def _process_caller_audio(app, call_id: str, pcm: bytes):
         log.info("call_id=%s transkribering: %r", call_id, text)
 
         result = voice_butler.analyze_response(text, config.OPENAI_API_KEY)
-        log.info("call_id=%s image_prompt: %s", call_id, result.image_prompt[:80])
+        final_prompt = (
+            f'{result.image_prompt} The user described their feeling as: "{text}".'
+        )
+        log.info("call_id=%s image_prompt: %s", call_id, final_prompt[:120])
 
-        png = image_pipeline.generate_png(result.image_prompt, config.OPENAI_API_KEY)
+        png = image_pipeline.generate_png(final_prompt, config.OPENAI_API_KEY)
         svg = image_pipeline.png_to_svg(png)
         card_store.save_card(
             cards_dir=config.CARDS_DIR,

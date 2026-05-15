@@ -13,14 +13,14 @@ from pathlib import Path
 import config
 
 QUESTIONS = [
-    "Hur står det till med min herre denna dag?",
-    "Goddag goddag, hur befinner sig herrn?",
-    "Får jag fråga hur dagen behandlat herrn?",
-    "Hur mår min herre idag?",
-    "Goddag, är allt väl med herrn?",
+    "Hej! Hur har du det idag, egentligen?",
+    "Tjena! Hur är läget — hur känner du dig just nu?",
+    "Hejsan! Berätta lite. Hur står det till med dig idag?",
+    "Hej! Hur mår du idag? Vad rör sig inombords?",
+    "Goddag! Vad pågår hos dig idag, känslomässigt?",
 ]
 
-FALLBACK_ACK = "Här min herre, ett mood-kort till er. Hoppas dagen blir vacker."
+FALLBACK_ACK = "Tack för att du delar. Jag återskapar känslan i en bild åt dig."
 
 
 def synthesize(text: str, out_path: Path):

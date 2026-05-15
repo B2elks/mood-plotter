@@ -191,9 +191,14 @@ async def _process_sms_text(app, call_id: str, text: str):
     """Bakgrund: LLM-tolkning + bildgenerering fran SMS-svar (hoppar over Whisper)."""
     try:
         result = voice_butler.analyze_response(text, config.OPENAI_API_KEY)
-        log.info("call_id=%s image_prompt: %s", call_id, result.image_prompt[:80])
+        # Inkludera anvandarens egna ord direkt i DALL-E-prompten sa
+        # kanslan kommer med — inte bara LLM:ns tolkning.
+        final_prompt = (
+            f'{result.image_prompt} The user described their feeling as: "{text}".'
+        )
+        log.info("call_id=%s image_prompt: %s", call_id, final_prompt[:120])
 
-        png = image_pipeline.generate_png(result.image_prompt, config.OPENAI_API_KEY)
+        png = image_pipeline.generate_png(final_prompt, config.OPENAI_API_KEY)
         svg = image_pipeline.png_to_svg(png)
         card_store.save_card(
             cards_dir=config.CARDS_DIR,
