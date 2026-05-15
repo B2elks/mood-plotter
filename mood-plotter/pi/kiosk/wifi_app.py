@@ -125,8 +125,13 @@ def settings():
     current = body1.get("phone", "") if s1 == 200 else ""
     s2, body2 = _server_request("GET", "/api/pir")
     pir_enabled = bool(body2.get("enabled", True)) if s2 == 200 else True
+    s3, body3 = _server_request("GET", "/api/mode")
+    mode = body3.get("mode", "voice") if s3 == 200 else "voice"
     return render_template(
-        "settings.html", current_phone=current, pir_enabled=pir_enabled,
+        "settings.html",
+        current_phone=current,
+        pir_enabled=pir_enabled,
+        mode=mode,
     )
 
 
@@ -178,6 +183,19 @@ def api_pir_get():
 def api_pir_set():
     data = request.get_json(silent=True) or {}
     status, body = _server_request("PUT", "/api/pir", body={"enabled": bool(data.get("enabled"))})
+    return jsonify(body), status if status > 0 else 502
+
+
+@app.route("/api/mode", methods=["GET"])
+def api_mode_get():
+    status, body = _server_request("GET", "/api/mode")
+    return jsonify(body), status if status > 0 else 502
+
+
+@app.route("/api/mode", methods=["PUT"])
+def api_mode_set():
+    data = request.get_json(silent=True) or {}
+    status, body = _server_request("PUT", "/api/mode", body={"mode": data.get("mode", "")})
     return jsonify(body), status if status > 0 else 502
 
 

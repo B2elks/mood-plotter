@@ -13,6 +13,7 @@ import card_store
 import config
 import elks_handler
 import image_pipeline
+import mode_state
 import phone_state
 import pir_state
 import templates
@@ -57,11 +58,17 @@ def _admin_unauthorized() -> web.Response:
     )
 
 
+SMS_QUESTIONS = [
+    "Hur står det till med min herre denna dag? Svara med några ord så ritar jag ett mood-kort.",
+    "Goddag! Hur mår herrn? Skicka några ord så får ni ett kort.",
+    "Min herre — hur är dagen? Svara så ritar jag ett mood-kort åt er.",
+]
+
+
 async def _start_call(app, dry_run: bool = False, source: str = "manual") -> tuple[int, dict]:
     """Gemensam logik for både /trigger och /admin/trigger.
 
-    source=pir/manual. Om PIR ar avslagen i settings blockeras source=pir,
-    men manuella anrop slipper igenom.
+    Mode-state styr om vi ringer eller SMS:ar. PIR-flag blockerar source=pir.
     """
     if source == "pir" and not pir_state.get_enabled(config.PIR_STATE):
         return 423, {"error": "pir disabled"}
@@ -70,33 +77,50 @@ async def _start_call(app, dry_run: bool = False, source: str = "manual") -> tup
     if not cd.try_acquire():
         return 429, {"error": "cooldown"}
 
+    mode = mode_state.get_mode(config.MODE_STATE)
+    call_id = str(uuid.uuid4())[:8]
+    to_number = phone_state.get_phone(config.PHONE_STATE, config.USER_PHONE_NUMBER)
+
+    if config.DRY_RUN or dry_run:
+        log.info("[DRY_RUN] skulle %sa till %s, call_id=%s", mode, to_number, call_id)
+        return 200, {"call_id": call_id, "dry_run": True, "mode": mode}
+
+    if mode == "sms":
+        # SMS-laget: skicka fragan, /elks/sms-reply hanterar svaret
+        import random
+        msg = random.choice(SMS_QUESTIONS)
+        sms_url = f"{config.SERVER_PUBLIC_URL}/elks/sms-reply?call_id={call_id}"
+        sms_id = await elks_handler.send_sms(
+            api_username=config.ELKS_API_USERNAME,
+            api_password=config.ELKS_API_PASSWORD,
+            from_number=config.ELKS_FROM_NUMBER,
+            to_number=to_number,
+            message=msg,
+            sms_url=sms_url,
+        )
+        if sms_id is None:
+            cd.release()
+            return 502, {"error": "sms send failed"}
+        app["pending_calls"][call_id] = {"state": "sms_sent", "sms_id": sms_id}
+        log.info("SMS skickat call_id=%s sms_id=%s", call_id, sms_id)
+        return 200, {"call_id": call_id, "sms_id": sms_id, "mode": "sms"}
+
+    # voice-laget
     dispatcher: WSDispatcher = app["ws_dispatcher"]
-    # Med en plotter inkopplad kraver vi en ready klient. I server-utan-plotter
-    # läget skippar vi check:en — då plottas bara på galleri-sidan.
     if (
-        not config.DRY_RUN
-        and not dry_run
-        and not config.ALLOW_NO_PLOTTER
+        not config.ALLOW_NO_PLOTTER
         and dispatcher.get_ready_client() is None
     ):
         cd.release()
         return 503, {"error": "no plotter ready"}
 
-    call_id = str(uuid.uuid4())[:8]
     app["pending_calls"][call_id] = {"state": "calling"}
 
-    if config.DRY_RUN or dry_run:
-        log.info("[DRY_RUN] skulle ringa, call_id=%s", call_id)
-        return 200, {"call_id": call_id, "dry_run": True}
-
-    # Anvand WS-Voice-routing om WS_CONNECT_NUMBER ar satt (realtidsljud),
-    # annars HTTP-record-vagen som fallback.
     if config.WS_CONNECT_NUMBER:
         voice_start = json.dumps({"connect": config.WS_CONNECT_NUMBER})
     else:
         voice_start = f"{config.SERVER_PUBLIC_URL}/elks/answer?call_id={call_id}"
 
-    to_number = phone_state.get_phone(config.PHONE_STATE, config.USER_PHONE_NUMBER)
     elks_id = await elks_handler.initiate_call(
         api_username=config.ELKS_API_USERNAME,
         api_password=config.ELKS_API_PASSWORD,
@@ -111,7 +135,72 @@ async def _start_call(app, dry_run: bool = False, source: str = "manual") -> tup
         return 502, {"error": "elks call failed"}
 
     app["pending_calls"][call_id]["elks_id"] = elks_id
-    return 200, {"call_id": call_id, "elks_id": elks_id}
+    return 200, {"call_id": call_id, "elks_id": elks_id, "mode": "voice"}
+
+
+async def elks_sms_reply_handler(request):
+    """46elks anropar denna nar anvandaren svarar pa fragan-SMS."""
+    call_id = request.query.get("call_id", "")
+    data = await request.post()
+    text = (data.get("message") or "").strip()
+    from_num = data.get("from", "")
+    log.info("call_id=%s SMS-svar fran %s: %r", call_id, from_num, text)
+
+    if text:
+        asyncio.create_task(_process_sms_text(request.app, call_id, text))
+        # Kvittera direkt med ett uppfoljnings-SMS sa anvandaren vet att vi tog emot
+        try:
+            await elks_handler.send_sms(
+                api_username=config.ELKS_API_USERNAME,
+                api_password=config.ELKS_API_PASSWORD,
+                from_number=config.ELKS_FROM_NUMBER,
+                to_number=from_num,
+                message="Tack min herre. Ett mood-kort är på väg.",
+            )
+        except Exception:
+            pass
+    return web.json_response({})
+
+
+async def _process_sms_text(app, call_id: str, text: str):
+    """Bakgrund: LLM-tolkning + bildgenerering fran SMS-svar (hoppar over Whisper)."""
+    try:
+        result = voice_butler.analyze_response(text, config.OPENAI_API_KEY)
+        log.info("call_id=%s image_prompt: %s", call_id, result.image_prompt[:80])
+
+        png = image_pipeline.generate_png(result.image_prompt, config.OPENAI_API_KEY)
+        svg = image_pipeline.png_to_svg(png)
+        card_store.save_card(
+            cards_dir=config.CARDS_DIR,
+            call_id=call_id,
+            png_bytes=png,
+            svg_text=svg,
+            transcription=text,
+            image_prompt=result.image_prompt,
+            butler_ack=result.butler_ack,
+        )
+        sent = await app["ws_dispatcher"].send_svg(svg)
+        log.info("call_id=%s kort sparat + plotter=%s", call_id, sent)
+    except Exception as e:
+        log.exception("call_id=%s SMS-pipeline-fel: %s", call_id, e)
+
+
+async def mode_get_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    return web.json_response({"mode": mode_state.get_mode(config.MODE_STATE)})
+
+
+async def mode_set_handler(request):
+    if not _check_pi_auth(request):
+        return web.Response(status=401, text="unauthorized")
+    data = await request.json()
+    try:
+        mode = mode_state.set_mode(config.MODE_STATE, (data or {}).get("mode", ""))
+    except ValueError as e:
+        return web.json_response({"ok": False, "error": str(e)}, status=400)
+    log.info("mode-state uppdaterat: %s", mode)
+    return web.json_response({"ok": True, "mode": mode})
 
 
 async def trigger_handler(request):
@@ -421,6 +510,9 @@ def create_app():
     app.router.add_put("/api/phone", phone_set_handler)
     app.router.add_get("/api/pir", pir_get_handler)
     app.router.add_put("/api/pir", pir_set_handler)
+    app.router.add_get("/api/mode", mode_get_handler)
+    app.router.add_put("/api/mode", mode_set_handler)
+    app.router.add_post("/elks/sms-reply", elks_sms_reply_handler)
     app.router.add_get("/elks/answer", elks_answer_handler)
     app.router.add_post("/elks/answer", elks_answer_handler)
     app.router.add_get("/elks/after_play", elks_after_play_handler)

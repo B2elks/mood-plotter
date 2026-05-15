@@ -91,6 +91,19 @@
   }
   #toast.show { display: block; }
 
+  /* Mode-knappar */
+  .mode-btn {
+    padding: 12px 16px; font-size: 16px;
+    background: var(--card); color: var(--text);
+    border: 2px solid #555; border-radius: 6px;
+    font-weight: bold;
+  }
+  .mode-btn.active {
+    background: var(--accent-strong);
+    border-color: white;
+    color: white;
+  }
+
   /* PIR toggle */
   .switch-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -143,8 +156,18 @@
   </section>
 
   <section>
+    <div class="switch-row">
+      <span class="switch-label">💬 Läge</span>
+      <div style="display:flex;gap:6px">
+        <button id="mode-voice-btn" class="mode-btn" data-mode="voice">📞 Samtal</button>
+        <button id="mode-sms-btn" class="mode-btn" data-mode="sms">💬 SMS</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <div class="switch-row" id="pir-row">
-      <span class="switch-label">📡 PIR-sensor (automatiska samtal)</span>
+      <span class="switch-label">📡 PIR-sensor (automatisk trigger)</span>
       <button id="pir-btn" class="topbtn" style="min-width: 120px; padding: 12px 18px; font-size: 18px;">
         {% if pir_enabled %}PÅ{% else %}AV{% endif %}
       </button>
@@ -194,6 +217,39 @@ for (const row of ROWS) {
   }
   kb.appendChild(div);
 }
+
+// Mode-val (voice / sms)
+let currentMode = "{{ mode }}";
+function updateModeBtns() {
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === currentMode);
+  });
+}
+updateModeBtns();
+document.querySelectorAll('.mode-btn').forEach(b => {
+  b.addEventListener('click', async () => {
+    const target = b.dataset.mode;
+    if (target === currentMode) return;
+    showToast('Byter läge…', 0);
+    try {
+      const res = await fetch('/api/mode', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mode: target}),
+      });
+      const data = await res.json();
+      if (res.ok && data.mode) {
+        currentMode = data.mode;
+        updateModeBtns();
+        showToast('Läge: ' + (currentMode === 'voice' ? '📞 Samtal' : '💬 SMS'));
+      } else {
+        showToast('Fel: ' + (data.error || res.status));
+      }
+    } catch (e) {
+      showToast('Fel: ' + e.message);
+    }
+  });
+});
 
 const pirBtn = document.getElementById('pir-btn');
 let pirEnabled = pirBtn.textContent.trim() === 'PÅ';

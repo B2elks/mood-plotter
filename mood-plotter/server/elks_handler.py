@@ -70,6 +70,40 @@ import aiohttp
 log = logging.getLogger(__name__)
 
 
+async def send_sms(
+    api_username: str,
+    api_password: str,
+    from_number: str,
+    to_number: str,
+    message: str,
+    sms_url: str | None = None,
+) -> str | None:
+    """Skicka SMS via 46elks. Om sms_url anges fangas svar dar.
+    Returnerar SMS-id eller None."""
+    payload = {
+        "from": from_number,
+        "to": to_number,
+        "message": message,
+    }
+    if sms_url:
+        payload["sms_url"] = sms_url
+    auth = aiohttp.BasicAuth(api_username, api_password)
+    try:
+        async with aiohttp.ClientSession(auth=auth) as session:
+            async with session.post(
+                "https://api.46elks.com/a1/sms", data=payload
+            ) as resp:
+                if resp.status == 200:
+                    result = await resp.json()
+                    return result.get("id")
+                body = await resp.text()
+                log.error("46elks SMS-fel %s: %s", resp.status, body)
+                return None
+    except Exception as e:
+        log.exception("Fel vid SMS-utskick: %s", e)
+        return None
+
+
 async def initiate_call(
     api_username: str,
     api_password: str,
