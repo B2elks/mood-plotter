@@ -162,6 +162,31 @@
   }
   #toast.show { display: block; }
 
+  /* SMS-mode banner — visas istallet for Ring-knappen */
+  #sms-banner {
+    display: none;
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 212, 255, 0.95);
+    color: #11111c;
+    padding: 24px 32px;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    z-index: 9;
+    border: 4px solid white;
+  }
+  #sms-banner.show { display: block; }
+  #sms-banner .label { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+  #sms-banner .num {
+    font-size: 38px;
+    font-family: "Courier New", monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+  #sms-banner .hint { font-size: 13px; margin-top: 6px; opacity: 0.85; }
+
   /* Modal / lightbox vid tap pa kort */
   #modal {
     display: none;
@@ -204,6 +229,11 @@
 <a id="settings-btn" class="fab" href="/settings">&#9881;</a>
 <a id="wifi-btn" class="fab" href="/wifi-setup">📶</a>
 <button id="call-btn" class="fab" title="Ring nu">📞</button>
+<div id="sms-banner">
+  <div class="label">💬 SMS:a för ett mood-kort:</div>
+  <div class="num" id="sms-num">+46766867361</div>
+  <div class="hint">Skriv hur du mår — vi ritar ett kort</div>
+</div>
 <div id="toast"></div>
 
 <div id="modal">
@@ -324,8 +354,25 @@ document.getElementById('call-btn').addEventListener('click', async () => {
   }
 });
 
+// Mode-fetcher: visa SMS-banner istallet for Ring-knappen i SMS-mode
+async function loadMode() {
+  try {
+    const res = await fetch('/api/mode');
+    const data = await res.json();
+    const isSms = data.mode === 'sms';
+    document.getElementById('call-btn').style.display = isSms ? 'none' : '';
+    const banner = document.getElementById('sms-banner');
+    banner.classList.toggle('show', isSms);
+    if (isSms && data.sms_number) {
+      document.getElementById('sms-num').textContent = data.sms_number;
+    }
+  } catch (e) {}
+}
+
 loadCards();
+loadMode();
 setInterval(loadCards, 5000);
+setInterval(loadMode, 15000);
 </script>
 </body>
 </html>

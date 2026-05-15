@@ -139,7 +139,7 @@ async def _start_call(app, dry_run: bool = False, source: str = "manual") -> tup
 
 
 async def elks_sms_reply_handler(request):
-    """46elks anropar denna nar anvandaren svarar pa fragan-SMS."""
+    """46elks anropar denna nar anvandaren svarar pa fragan-SMS (utgaende-mode)."""
     call_id = request.query.get("call_id", "")
     data = await request.post()
     text = (data.get("message") or "").strip()
@@ -148,7 +148,6 @@ async def elks_sms_reply_handler(request):
 
     if text:
         asyncio.create_task(_process_sms_text(request.app, call_id, text))
-        # Kvittera direkt med ett uppfoljnings-SMS sa anvandaren vet att vi tog emot
         try:
             await elks_handler.send_sms(
                 api_username=config.ELKS_API_USERNAME,
@@ -159,6 +158,44 @@ async def elks_sms_reply_handler(request):
             )
         except Exception:
             pass
+    return web.json_response({})
+
+
+async def elks_sms_incoming_handler(request):
+    """46elks anropar denna for VARJE inkommande SMS till vart nummer.
+
+    Gor som elkplotter-originalet: SMS-texten blir prompten, vi tolkar
+    den med LLM-->DALL-E-->vpype-->plotter. Funkar oavsett mode-state.
+    """
+    data = await request.post()
+    text = (data.get("message") or "").strip()
+    from_num = data.get("from", "")
+    sms_id = data.get("id", "") or str(uuid.uuid4())[:8]
+    call_id = sms_id[-8:]
+    log.info("Inkommande SMS fran %s id=%s: %r", from_num, sms_id, text)
+
+    if not text:
+        return web.json_response({})
+
+    # Cooldown ocksa for SMS-in, men inte sa stramt
+    cd: Cooldown = request.app["cooldown"]
+    if not cd.try_acquire():
+        log.info("SMS fran %s blockat av cooldown", from_num)
+        return web.json_response({})
+
+    asyncio.create_task(_process_sms_text(request.app, call_id, text))
+
+    # Kvitter direkt
+    try:
+        await elks_handler.send_sms(
+            api_username=config.ELKS_API_USERNAME,
+            api_password=config.ELKS_API_PASSWORD,
+            from_number=config.ELKS_FROM_NUMBER,
+            to_number=from_num,
+            message="Tack min herre. Ett mood-kort ritas och visas pa vaggen inom en minut.",
+        )
+    except Exception as e:
+        log.warning("kunde inte skicka kvittens-SMS: %s", e)
     return web.json_response({})
 
 
@@ -188,7 +225,10 @@ async def _process_sms_text(app, call_id: str, text: str):
 async def mode_get_handler(request):
     if not _check_pi_auth(request):
         return web.Response(status=401, text="unauthorized")
-    return web.json_response({"mode": mode_state.get_mode(config.MODE_STATE)})
+    return web.json_response({
+        "mode": mode_state.get_mode(config.MODE_STATE),
+        "sms_number": config.ELKS_FROM_NUMBER,
+    })
 
 
 async def mode_set_handler(request):
@@ -513,6 +553,7 @@ def create_app():
     app.router.add_get("/api/mode", mode_get_handler)
     app.router.add_put("/api/mode", mode_set_handler)
     app.router.add_post("/elks/sms-reply", elks_sms_reply_handler)
+    app.router.add_post("/elks/sms-incoming", elks_sms_incoming_handler)
     app.router.add_get("/elks/answer", elks_answer_handler)
     app.router.add_post("/elks/answer", elks_answer_handler)
     app.router.add_get("/elks/after_play", elks_after_play_handler)

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=800,initial-scale=1,user-scalable=no">
+<title>Ändra telefonnummer</title>
+<style>
+  :root {
+    --bg: #1b1b2e;
+    --card: #2a2a44;
+    --accent-strong: #ff00ff;
+    --text: #ffffff;
+    --muted: #b0b0d0;
+    --key: #3a3a55;
+    --key-active: #5a5a80;
+  }
+  * { cursor: none !important; }
+  html, body {
+    margin: 0; padding: 0;
+    width: 800px; height: 480px;
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    background: var(--bg); color: var(--text);
+    overflow: hidden;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  body { display: flex; flex-direction: column; }
+  header {
+    padding: 6px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #444;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 18px; margin: 0; color: var(--accent-strong); }
+  .topbtn {
+    background: var(--card); border: 1px solid #555; color: var(--text);
+    padding: 6px 12px; border-radius: 6px; font-size: 15px;
+  }
+  main {
+    flex: 1; overflow: hidden;
+    display: flex; flex-direction: column;
+    padding: 6px;
+    gap: 4px;
+  }
+  .info {
+    background: var(--card); border-radius: 6px; padding: 6px 10px;
+    font-size: 12px; color: var(--muted);
+  }
+  #phone-display {
+    background: #11111c;
+    border: 2px solid var(--accent-strong);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 32px;
+    letter-spacing: 3px;
+    font-family: "Courier New", monospace;
+    color: white;
+    text-align: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  /* Stor numpad — 4 rader, blockar hela bredden */
+  #kb {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 5px;
+    padding: 0 80px;
+    min-height: 0;
+  }
+  .kb-row { display: contents; }
+  .kb-key {
+    font-size: 36px;
+    background: var(--key); color: var(--text);
+    border: 1px solid #555; border-radius: 8px;
+    font-weight: bold;
+  }
+  .kb-key:active { background: var(--key-active); transform: scale(0.94); }
+  .kb-key.special { font-size: 24px; background: #4a3a55; }
+  #actions {
+    display: flex; gap: 6px;
+    flex-shrink: 0;
+  }
+  #actions button {
+    flex: 1;
+    padding: 10px; font-size: 16px;
+    border-radius: 6px; border: 0; font-weight: bold;
+  }
+  #cancel-btn { background: var(--card); color: white; border: 1px solid #555; }
+  #save-btn { background: var(--accent-strong); color: white; }
+  #toast {
+    display: none;
+    position: fixed; left: 50%; bottom: 60px;
+    transform: translateX(-50%);
+    padding: 8px 14px; border-radius: 8px;
+    background: rgba(0,0,0,0.9); color: white;
+    font-size: 14px;
+  }
+  #toast.show { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📱 Telefonnummer</h1>
+  <a class="topbtn" href="/settings">↩ Avbryt</a>
+</header>
+<main>
+  <div class="info">
+    💡 Detta är numret som rings upp eller SMS:as när någon trycker på 📞-knappen eller PIR-sensorn triggar. SMS:et kommer från <strong>+46766867361</strong>.
+  </div>
+  <div id="phone-display">{{ current_phone or "+46" }}</div>
+  <div id="kb">
+    <button class="kb-key" data-k="1">1</button>
+    <button class="kb-key" data-k="2">2</button>
+    <button class="kb-key" data-k="3">3</button>
+    <button class="kb-key" data-k="4">4</button>
+    <button class="kb-key" data-k="5">5</button>
+    <button class="kb-key" data-k="6">6</button>
+    <button class="kb-key" data-k="7">7</button>
+    <button class="kb-key" data-k="8">8</button>
+    <button class="kb-key" data-k="9">9</button>
+    <button class="kb-key special" data-k="+">+</button>
+    <button class="kb-key" data-k="0">0</button>
+    <button class="kb-key special" data-k="back">⌫</button>
+  </div>
+  <div id="actions">
+    <button id="cancel-btn" onclick="location.href='/settings'">Avbryt</button>
+    <button id="clear-btn">Rensa</button>
+    <button id="save-btn">💾 Spara</button>
+  </div>
+</main>
+<div id="toast"></div>
+
+<script>
+const display = document.getElementById('phone-display');
+const toast = document.getElementById('toast');
+function showToast(msg, ms=2200) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  if (ms) setTimeout(() => toast.classList.remove('show'), ms);
+}
+
+document.querySelectorAll('.kb-key').forEach(b => {
+  b.addEventListener('click', () => {
+    const k = b.dataset.k;
+    let v = display.textContent;
+    if (k === 'back') v = v.slice(0, -1);
+    else v += k;
+    display.textContent = v || '+46';
+  });
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  display.textContent = '+46';
+});
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const phone = display.textContent.trim();
+  if (!phone || phone === '+46') { showToast('Tomt nummer'); return; }
+  showToast('Sparar…', 0);
+  try {
+    const res = await fetch('/api/phone', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({phone}),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      showToast('✅ Sparat: ' + data.phone, 1500);
+      setTimeout(() => { window.location = '/settings'; }, 1500);
+    } else {
+      showToast('Fel: ' + (data.error || res.status));
+    }
+  } catch (e) {
+    showToast('Fel: ' + e.message);
+  }
+});
+</script>
+</body>
+</html>
