@@ -176,6 +176,13 @@
     </div>
   </section>
 
+  <section>
+    <h2>Kalibrering</h2>
+    <button id="frame-btn" class="topbtn" style="padding: 12px 18px; font-size: 16px;">
+      🖼️ Rita ram (kontrollera penn-position)
+    </button>
+  </section>
+
   <section class="link-row">
     <a class="wifi-link" href="/wifi-setup">📶 Byt WiFi-nätverk</a>
   </section>
@@ -227,6 +234,27 @@ document.querySelectorAll('.mode-btn').forEach(b => {
       showToast('Fel: ' + e.message);
     }
   });
+});
+
+// Rita-ram-knappen: skickar rektangel-SVG till plottern for pen-kalibrering
+document.getElementById('frame-btn').addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Skickar ram…';
+  try {
+    const res = await fetch('/api/draw-frame', {method: 'POST'});
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      showToast('Ram skickad till plottern ✅');
+    } else {
+      showToast('Fel: ' + (data.error || 'kunde inte na plotter'));
+    }
+  } catch (err) {
+    showToast('Fel: ' + err.message);
+  } finally {
+    setTimeout(() => { btn.disabled = false; btn.textContent = orig; }, 1500);
+  }
 });
 
 const pirBtn = document.getElementById('pir-btn');
