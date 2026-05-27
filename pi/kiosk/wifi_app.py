@@ -180,6 +180,13 @@ def api_trigger():
     return jsonify(body), status if status > 0 else 502
 
 
+@app.route("/api/draw-frame", methods=["POST"])
+def api_draw_frame():
+    """Trigga rit av kalibrerings-ram (10x10cm rektangel) pa plottern."""
+    status, body = _server_request("POST", "/draw-frame")
+    return jsonify(body), status if status > 0 else 502
+
+
 @app.route("/api/pir", methods=["GET"])
 def api_pir_get():
     status, body = _server_request("GET", "/api/pir")

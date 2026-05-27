@@ -481,6 +481,22 @@ async def admin_replot_handler(request):
     return web.json_response({"ok": sent, "svg": target.svg_name})
 
 
+async def draw_frame_handler(request):
+    """Plotta en 10x10cm ram for pen-kalibrering — sa man ser var
+    AxiDraw:n hamnar pa pappret innan ett riktigt kort plottas."""
+    svg = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<svg xmlns="http://www.w3.org/2000/svg" '
+        'width="100mm" height="100mm" viewBox="0 0 100 100">'
+        '<rect x="0.5" y="0.5" width="99" height="99" '
+        'fill="none" stroke="black" stroke-width="0.5"/>'
+        '</svg>'
+    )
+    sent = await request.app["ws_dispatcher"].send_svg(svg)
+    log.info("draw frame sent=%s", sent)
+    return web.json_response({"ok": sent})
+
+
 async def ws_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -537,6 +553,7 @@ def create_app():
     app.router.add_get("/admin", admin_handler)
     app.router.add_post("/admin/trigger", admin_trigger_handler)
     app.router.add_post("/admin/replot", admin_replot_handler)
+    app.router.add_post("/draw-frame", draw_frame_handler)
     app.router.add_get("/cards/{name}", cards_handler)
     app.router.add_post("/trigger", trigger_handler)
     app.router.add_get("/api/phone", phone_get_handler)
