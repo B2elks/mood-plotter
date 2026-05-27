@@ -1,7 +1,10 @@
 [Unit]
 Description=Mood Plotter — Sway-kiosk pa LCD:n
-After=mood-plotter-wifi.service graphical.target
-Wants=mood-plotter-wifi.service
+# udev-settle: vanta tills 99-waveshare-touch.rules har applicerats sa
+# FT5x06 ar klassad som touchscreen INNAN sway startar. Utan detta kan
+# sway plocka upp enheten som mus i forsta forsoket → ingen touch.
+After=mood-plotter-wifi.service graphical.target systemd-udev-settle.service
+Wants=mood-plotter-wifi.service systemd-udev-settle.service
 
 [Service]
 Type=simple
