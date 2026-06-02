@@ -39,14 +39,14 @@
     padding: 6px 12px; border-radius: 6px; font-size: 15px;
   }
   main {
-    flex: 1; overflow: hidden;
+    flex: 1; overflow-y: auto;
     display: flex; flex-direction: column;
-    padding: 8px;
-    gap: 8px;
+    padding: 6px 8px;
+    gap: 6px;
     min-height: 0;
   }
   section {
-    background: var(--card); border-radius: 8px; padding: 10px;
+    background: var(--card); border-radius: 8px; padding: 8px 10px;
   }
   section h2 { margin: 0 0 6px 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
   .row { display: flex; align-items: center; gap: 8px; }
@@ -168,19 +168,17 @@
   </section>
 
   <section>
-    <div class="switch-row" id="pir-row">
-      <span class="switch-label">📡 PIR-sensor (automatisk trigger)</span>
-      <button id="pir-btn" class="topbtn" style="min-width: 120px; padding: 12px 18px; font-size: 18px;">
-        {% if pir_enabled %}PÅ{% else %}AV{% endif %}
+    <div class="row" style="gap: 8px;">
+      <div class="switch-row" style="flex:1; min-width:0;">
+        <span class="switch-label">📡 PIR</span>
+        <button id="pir-btn" class="topbtn" style="min-width: 80px; padding: 10px 14px; font-size: 16px;">
+          {% if pir_enabled %}PÅ{% else %}AV{% endif %}
+        </button>
+      </div>
+      <button id="frame-btn" class="topbtn" style="flex:1; padding: 10px 14px; font-size: 15px;">
+        🖼️ Rita ram
       </button>
     </div>
-  </section>
-
-  <section>
-    <h2>Kalibrering</h2>
-    <button id="frame-btn" class="topbtn" style="padding: 12px 18px; font-size: 16px;">
-      🖼️ Rita ram (kontrollera penn-position)
-    </button>
   </section>
 
   <section class="link-row">
