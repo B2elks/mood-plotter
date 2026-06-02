@@ -8,16 +8,26 @@ if [[ "${EUID}" -eq 0 ]]; then
   exit 1
 fi
 
-# === Paket: Chromium + Cage ===
+# === Paket: Chromium + Sway ===
 # Pi OS Trixie/Bookworm: paketet heter "chromium" (inte chromium-browser).
+# sway + swayidle + swaybg = compositor + idle-handler + bakgrund.
+# dbus-user-session = sa Chromium kan prata DBus utan errors.
 sudo apt-get update
 sudo apt-get install -y \
   chromium \
-  cage \
+  sway \
+  swayidle \
+  swaybg \
+  dbus-user-session \
   python3-venv \
   python3-pip \
   network-manager \
   fonts-noto-color-emoji
+
+# === Disable getty pa tty1 sa kiosken kan ta over den ===
+# Annars hanger getty@tty1 fast vid tty1 och sway-servicen exit:ar tyst
+# direkt efter start (PAMName=login kan inte ta over en upptagen tty).
+sudo systemctl disable --now getty@tty1.service || true
 
 # === Venv + Flask ===
 cd "$(dirname "$0")/../.."   # → mood-plotter/
