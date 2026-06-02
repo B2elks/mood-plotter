@@ -11,6 +11,7 @@ from aiohttp import web
 import audio_clips
 import card_store
 import config
+import easter_eggs
 import elks_handler
 import image_pipeline
 import mode_state
@@ -181,6 +182,15 @@ async def elks_sms_incoming_handler(request):
     cd: Cooldown = request.app["cooldown"]
     if not cd.try_acquire():
         log.info("SMS fran %s blockat av cooldown", from_num)
+        return web.json_response({})
+
+    # Easter egg-check INNAN normal pipeline: matchar texten ett
+    # predefinierat SVG? Skicka direkt till plottern och hoppa over
+    # save_card sa det inte syns i galleriet.
+    egg_svg = easter_eggs.match_keyword(text)
+    if egg_svg:
+        log.info("Easter egg triggered av '%s' fran %s", text, from_num)
+        asyncio.create_task(request.app["ws_dispatcher"].send_svg(egg_svg))
         return web.json_response({})
 
     asyncio.create_task(_process_sms_text(request.app, call_id, text))
