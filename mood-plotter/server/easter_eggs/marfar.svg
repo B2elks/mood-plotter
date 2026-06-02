@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <!-- Exempel-easter-egg: hjarta. Trigger-SMS: "marfar" -->
+  <path d="M 50 78
+           C 18 58 8 30 28 18
+           C 38 13 50 22 50 38
+           C 50 22 62 13 72 18
+           C 92 30 82 58 50 78 Z"
+        fill="none" stroke="black" stroke-width="0.5"/>
+</svg>
