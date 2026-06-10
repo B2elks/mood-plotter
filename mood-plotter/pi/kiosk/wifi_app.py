@@ -65,6 +65,52 @@ def is_online() -> bool:
     return "connected" in out.lower()
 
 
+def active_wifi_ssid() -> str:
+    code, out, _ = _run(
+        ["nmcli", "-t", "-f", "ACTIVE,SSID", "dev", "wifi"], timeout=5
+    )
+    if code != 0:
+        return ""
+    for line in out.splitlines():
+        if line.startswith("yes:"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
+def list_saved() -> list[dict]:
+    """Sparade wifi-profiler. netplan-* filtreras bort — de regereras anda."""
+    code, out, _ = _run(
+        ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"], timeout=5
+    )
+    if code != 0:
+        return []
+    active = active_wifi_ssid()
+    result = []
+    for line in out.splitlines():
+        parts = line.split(":")
+        if len(parts) < 2:
+            continue
+        name = parts[0].strip()
+        conn_type = parts[1].strip()
+        if conn_type != "802-11-wireless":
+            continue
+        if name.startswith("netplan-"):
+            continue
+        result.append({"name": name, "active": name == active})
+    return result
+
+
+def forget_wifi(name: str) -> tuple[bool, str]:
+    if name.startswith("netplan-"):
+        return False, "kan inte glomma netplan-nat"
+    code, out, err = _run(
+        ["sudo", "-n", "nmcli", "connection", "delete", name], timeout=10
+    )
+    if code == 0:
+        return True, out.strip() or "borttagen"
+    return False, err.strip() or out.strip() or "okant fel"
+
+
 def list_networks() -> list[dict]:
     _run(["nmcli", "dev", "wifi", "rescan"], timeout=8)
     code, out, _ = _run(
@@ -150,6 +196,21 @@ def settings():
 @app.route("/api/networks")
 def api_networks():
     return jsonify(list_networks())
+
+
+@app.route("/api/saved")
+def api_saved():
+    return jsonify({"saved": list_saved(), "active": active_wifi_ssid()})
+
+
+@app.route("/api/forget", methods=["POST"])
+def api_forget():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"ok": False, "error": "saknar namn"}), 400
+    ok, msg = forget_wifi(name)
+    return jsonify({"ok": ok, "message": msg, "error": "" if ok else msg})
 
 
 @app.route("/api/status")

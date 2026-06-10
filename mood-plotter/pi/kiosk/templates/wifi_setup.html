@@ -40,12 +40,19 @@
   main { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
 
   /* Network list — kompakt for 480px hojd */
-  #networks {
+  #list-view {
     flex: 1; overflow-y: auto; padding: 4px 8px;
-    list-style: none; margin: 0;
     display: none;
   }
-  #networks.visible { display: block; }
+  #list-view.visible { display: block; }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    padding: 8px 4px 4px;
+  }
+  .nets { list-style: none; margin: 0; padding: 0; }
   .net {
     display: flex; align-items: center;
     padding: 10px 12px;
@@ -53,11 +60,36 @@
     background: var(--card);
     margin: 4px 0;
     font-size: 16px;
+    gap: 8px;
   }
-  .net:active { background: var(--key-active); }
+  .net.tappable:active { background: var(--key-active); }
   .net .ssid { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .net .sig { color: var(--muted); margin-left: 8px; font-size: 13px; min-width: 40px; text-align: right; }
-  .net .lock { margin-left: 6px; opacity: 0.7; }
+  .net .active-dot {
+    color: #6fdc6f; font-size: 14px; margin-right: -2px;
+  }
+  .net .lock { opacity: 0.6; font-size: 13px; }
+  .net .bars {
+    display: inline-flex; align-items: flex-end; gap: 2px;
+    height: 14px;
+  }
+  .net .bars span {
+    display: inline-block;
+    width: 4px;
+    background: var(--muted);
+    border-radius: 1px;
+    opacity: 0.25;
+  }
+  .net .bars span.on { opacity: 1; background: var(--accent); }
+  .net .bars span:nth-child(1) { height: 4px; }
+  .net .bars span:nth-child(2) { height: 7px; }
+  .net .bars span:nth-child(3) { height: 10px; }
+  .net .bars span:nth-child(4) { height: 14px; }
+  .net .forget {
+    background: transparent; color: var(--muted);
+    border: 1px solid #555; border-radius: 4px;
+    padding: 5px 10px; font-size: 12px;
+  }
+  .net .forget.confirm { color: #ff8080; border-color: #ff8080; }
 
   /* Password / keyboard view */
   #pw-view {
@@ -130,7 +162,12 @@
   </div>
 </header>
 <main>
-  <ul id="networks" class="visible"></ul>
+  <div id="list-view" class="visible">
+    <div id="saved-label" class="section-label" style="display:none">Sparade</div>
+    <ul id="saved" class="nets"></ul>
+    <div id="avail-label" class="section-label">Tillgängliga</div>
+    <ul id="available" class="nets"></ul>
+  </div>
 
   <div id="pw-view">
     <div id="pw-ssid"></div>
@@ -146,7 +183,11 @@
 <div id="status"></div>
 
 <script>
-const networksEl = document.getElementById('networks');
+const listView = document.getElementById('list-view');
+const savedEl = document.getElementById('saved');
+const savedLabel = document.getElementById('saved-label');
+const availEl = document.getElementById('available');
+const availLabel = document.getElementById('avail-label');
 const pwView = document.getElementById('pw-view');
 const pwInput = document.getElementById('pw-input');
 const pwSsidEl = document.getElementById('pw-ssid');
@@ -161,25 +202,117 @@ function showStatus(msg, ms=2500) {
   if (ms) setTimeout(() => statusEl.classList.remove('show'), ms);
 }
 
-async function loadNetworks() {
-  networksEl.innerHTML = '<li class="net"><span class="ssid">Skannar…</span></li>';
-  const res = await fetch('/api/networks');
-  const data = await res.json();
-  networksEl.innerHTML = '';
-  if (!data.length) {
-    networksEl.innerHTML = '<li class="net"><span class="ssid">Inga nätverk synliga</span></li>';
+function bars(signal) {
+  const filled = signal >= 75 ? 4 : signal >= 50 ? 3 : signal >= 25 ? 2 : signal > 0 ? 1 : 0;
+  let html = '<span class="bars">';
+  for (let i = 1; i <= 4; i++) {
+    html += `<span class="${i <= filled ? 'on' : ''}"></span>`;
+  }
+  return html + '</span>';
+}
+
+async function loadAll() {
+  availEl.innerHTML = '<li class="net"><span class="ssid">Skannar…</span></li>';
+  savedEl.innerHTML = '';
+  savedLabel.style.display = 'none';
+
+  const [netsRes, savedRes] = await Promise.all([
+    fetch('/api/networks'),
+    fetch('/api/saved'),
+  ]);
+  const nets = await netsRes.json();
+  const savedData = await savedRes.json();
+  const saved = savedData.saved || [];
+  const activeSsid = savedData.active || '';
+
+  // Index live signals by SSID so saved entries can show strength if visible.
+  const sigByName = {};
+  const securedByName = {};
+  for (const n of nets) {
+    sigByName[n.ssid] = n.signal;
+    securedByName[n.ssid] = n.secured;
+  }
+
+  // Render saved section.
+  if (saved.length) {
+    savedLabel.style.display = 'block';
+    for (const s of saved) {
+      const li = document.createElement('li');
+      li.className = 'net';
+      const sig = sigByName[s.name] ?? 0;
+      const isActive = s.active || s.name === activeSsid;
+      li.innerHTML = `
+        ${isActive ? '<span class="active-dot">●</span>' : ''}
+        <span class="ssid">${escapeHtml(s.name)}</span>
+        ${bars(sig)}
+        <button class="forget" data-name="${escapeAttr(s.name)}">Glöm</button>
+      `;
+      li.querySelector('.forget').addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        onForget(ev.currentTarget, s.name);
+      });
+      savedEl.appendChild(li);
+    }
+  }
+
+  // Render available section — hide ones that are already saved.
+  const savedNames = new Set(saved.map(s => s.name));
+  availEl.innerHTML = '';
+  const visible = nets.filter(n => !savedNames.has(n.ssid));
+  if (!visible.length) {
+    availEl.innerHTML = '<li class="net"><span class="ssid">Inga andra nät synliga</span></li>';
     return;
   }
-  for (const n of data) {
+  for (const n of visible) {
     const li = document.createElement('li');
-    li.className = 'net';
+    li.className = 'net tappable';
     li.innerHTML = `
       <span class="ssid">${escapeHtml(n.ssid)}</span>
       <span class="lock">${n.secured ? '🔒' : ''}</span>
-      <span class="sig">${n.signal}%</span>
+      ${bars(n.signal)}
     `;
     li.addEventListener('click', () => choose(n));
-    networksEl.appendChild(li);
+    availEl.appendChild(li);
+  }
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+async function onForget(btn, name) {
+  if (!btn.classList.contains('confirm')) {
+    btn.classList.add('confirm');
+    btn.textContent = 'Säker?';
+    setTimeout(() => {
+      btn.classList.remove('confirm');
+      btn.textContent = 'Glöm';
+    }, 3500);
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch('/api/forget', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name}),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showStatus('Glömt: ' + name);
+      loadAll();
+    } else {
+      showStatus('Misslyckades: ' + (data.error || 'okänt fel'));
+      btn.disabled = false;
+      btn.textContent = 'Glöm';
+      btn.classList.remove('confirm');
+    }
+  } catch (e) {
+    showStatus('Fel: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Glöm';
+    btn.classList.remove('confirm');
   }
 }
 
@@ -191,14 +324,14 @@ function choose(net) {
   currentSsid = net.ssid;
   pwSsidEl.textContent = '🔑 ' + net.ssid;
   pwInput.value = '';
-  networksEl.classList.remove('visible');
+  listView.classList.remove('visible');
   pwView.classList.add('visible');
   if (!net.secured) doConnect('');
 }
 
 function backToList() {
   pwView.classList.remove('visible');
-  networksEl.classList.add('visible');
+  listView.classList.add('visible');
   currentSsid = null;
 }
 
@@ -222,7 +355,7 @@ async function doConnect(password) {
   }
 }
 
-document.getElementById('refresh').addEventListener('click', loadNetworks);
+document.getElementById('refresh').addEventListener('click', loadAll);
 document.getElementById('back').addEventListener('click', () => {
   if (pwView.classList.contains('visible')) backToList();
   else window.location = '/';
@@ -282,7 +415,7 @@ function onKey(k) {
 }
 
 renderKb();
-loadNetworks();
+loadAll();
 </script>
 </body>
 </html>
