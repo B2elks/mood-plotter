@@ -96,7 +96,10 @@ def list_networks() -> list[dict]:
 
 
 def connect_wifi(ssid: str, password: str) -> tuple[bool, str]:
-    cmd = ["nmcli", "dev", "wifi", "connect", ssid]
+    # netplan-managed connections require root via NetworkManager + polkit,
+    # so we shell out via sudo. Requires /etc/sudoers.d/mood-plotter-wifi
+    # to grant `pi` NOPASSWD on /usr/bin/nmcli — install.sh sets that up.
+    cmd = ["sudo", "-n", "nmcli", "dev", "wifi", "connect", ssid]
     if password:
         cmd += ["password", password]
     code, out, err = _run(cmd, timeout=40)
