@@ -60,9 +60,14 @@ sudo systemctl enable --now seatd
 # === Systemd-units ===
 sudo cp pi/kiosk/mood-plotter-wifi.service /etc/systemd/system/
 sudo cp pi/kiosk/mood-plotter-kiosk.service /etc/systemd/system/
+sudo cp pi/kiosk/mood-plotter-touch-watchdog.service /etc/systemd/system/
+sudo cp pi/kiosk/mood-plotter-touch-watchdog.timer /etc/systemd/system/
+sudo cp pi/kiosk/mood-plotter-touch-check /usr/local/bin/
+sudo chmod +x /usr/local/bin/mood-plotter-touch-check
 sudo systemctl daemon-reload
 sudo systemctl enable --now mood-plotter-wifi.service
 sudo systemctl enable mood-plotter-kiosk.service
+sudo systemctl enable --now mood-plotter-touch-watchdog.timer
 
 # === Default till graphical.target sa kiosk auto-startar vid boot ===
 sudo systemctl set-default graphical.target

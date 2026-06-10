@@ -1,0 +1,21 @@
+#!/bin/sh
+# Verifierar att FT5x06 ar synlig som "touch" i sway. Om inte → restarta
+# mood-plotter-kiosk sa udev far en ny chans att klassa enheten korrekt.
+set -eu
+
+SOCK=$(ls /run/user/1000/sway-ipc.1000.*.sock 2>/dev/null | head -1 || true)
+if [ -z "$SOCK" ]; then
+    # Sway kanske inte ar uppe an — lat den vara, OnBootSec tar nasta passage.
+    exit 0
+fi
+
+# get_inputs returnerar JSON-array, ft5x06-noden ska ha "type": "touch".
+HAS_TOUCH=$(sudo -u pi SWAYSOCK="$SOCK" swaymsg -t get_inputs 2>/dev/null \
+    | grep -c '"type": "touch"' || true)
+
+if [ "$HAS_TOUCH" -ge 1 ]; then
+    exit 0
+fi
+
+logger -t mood-plotter-touch-check "touch saknas i sway-inputs — restartar kiosk"
+systemctl restart mood-plotter-kiosk.service

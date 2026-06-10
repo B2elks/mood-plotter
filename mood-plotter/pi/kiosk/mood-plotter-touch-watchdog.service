@@ -1,0 +1,7 @@
+[Unit]
+Description=Mood Plotter — verifiera att sway ser FT5x06 som touch
+Documentation=https://github.com/B2elks/mood-plotter
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mood-plotter-touch-check
