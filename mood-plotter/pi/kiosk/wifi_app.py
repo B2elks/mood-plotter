@@ -191,7 +191,12 @@ def index():
 
 @app.route("/wifi-setup")
 def wifi_setup():
-    return render_template("wifi_setup.html")
+    resp = app.make_response(render_template("wifi_setup.html"))
+    # Tvinga chromium att alltid hamta farsken — vi har sett browsern fastna pa
+    # gammal HTML/JS efter deploy.
+    resp.headers["Cache-Control"] = "no-store, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp
 
 
 @app.route("/phone")
