@@ -238,18 +238,30 @@ async function loadAll() {
     savedLabel.style.display = 'block';
     for (const s of saved) {
       const li = document.createElement('li');
-      li.className = 'net';
+      li.className = 'net tappable';
       const sig = sigByName[s.name] ?? 0;
       const isActive = s.active || s.name === activeSsid;
+      const forgetBtn = s.forgettable !== false
+        ? `<button class="forget" data-name="${escapeAttr(s.name)}">Glöm</button>`
+        : '';
       li.innerHTML = `
         ${isActive ? '<span class="active-dot">●</span>' : ''}
         <span class="ssid">${escapeHtml(s.name)}</span>
         ${bars(sig)}
-        <button class="forget" data-name="${escapeAttr(s.name)}">Glöm</button>
+        ${forgetBtn}
       `;
-      li.querySelector('.forget').addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        onForget(ev.currentTarget, s.name);
+      const fb = li.querySelector('.forget');
+      if (fb) {
+        fb.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          onForget(ev.currentTarget, s.name);
+        });
+      }
+      // Tap on saved network = reconnect without password (uses connection up)
+      li.addEventListener('click', () => {
+        if (isActive) return;
+        currentSsid = s.name;
+        doConnect('');
       });
       savedEl.appendChild(li);
     }

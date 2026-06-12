@@ -77,34 +77,53 @@ def active_wifi_ssid() -> str:
     return ""
 
 
-def list_saved() -> list[dict]:
-    """Sparade wifi-profiler. netplan-* filtreras bort — de regereras anda."""
+def _profile_ssid_map() -> dict[str, str]:
+    """{ssid: profile_name} for alla sparade wifi-profiler (inkl netplan-*)."""
     code, out, _ = _run(
         ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"], timeout=5
     )
     if code != 0:
-        return []
-    active = active_wifi_ssid()
-    result = []
+        return {}
+    profiles = []
     for line in out.splitlines():
         parts = line.split(":")
-        if len(parts) < 2:
+        if len(parts) < 2 or parts[1].strip() != "802-11-wireless":
             continue
-        name = parts[0].strip()
-        conn_type = parts[1].strip()
-        if conn_type != "802-11-wireless":
-            continue
-        if name.startswith("netplan-"):
-            continue
-        result.append({"name": name, "active": name == active})
+        profiles.append(parts[0].strip())
+    result = {}
+    for name in profiles:
+        c2, ssid_out, _ = _run(
+            ["nmcli", "-t", "-g", "802-11-wireless.ssid", "connection", "show", name],
+            timeout=3,
+        )
+        if c2 == 0:
+            ssid = ssid_out.strip()
+            if ssid:
+                result[ssid] = name
     return result
 
 
+def list_saved() -> list[dict]:
+    """Sparade wifi-profiler. netplan-* visas men kan inte glommas."""
+    active = active_wifi_ssid()
+    return [
+        {
+            "name": ssid,
+            "profile": prof,
+            "active": ssid == active,
+            "forgettable": not prof.startswith("netplan-"),
+        }
+        for ssid, prof in _profile_ssid_map().items()
+    ]
+
+
 def forget_wifi(name: str) -> tuple[bool, str]:
-    if name.startswith("netplan-"):
-        return False, "kan inte glomma netplan-nat"
+    profiles = _profile_ssid_map()
+    prof = profiles.get(name, name)
+    if prof.startswith("netplan-"):
+        return False, "kan inte glomma natverk fran netplan"
     code, out, err = _run(
-        ["sudo", "-n", "nmcli", "connection", "delete", name], timeout=10
+        ["sudo", "-n", "nmcli", "connection", "delete", prof], timeout=10
     )
     if code == 0:
         return True, out.strip() or "borttagen"
@@ -145,9 +164,16 @@ def connect_wifi(ssid: str, password: str) -> tuple[bool, str]:
     # netplan-managed connections require root via NetworkManager + polkit,
     # so we shell out via sudo. Requires /etc/sudoers.d/mood-plotter-wifi
     # to grant `pi` NOPASSWD on /usr/bin/nmcli — install.sh sets that up.
-    cmd = ["sudo", "-n", "nmcli", "dev", "wifi", "connect", ssid]
-    if password:
-        cmd += ["password", password]
+    #
+    # For redan sparade SSID:n: anvand `connection up <profile>` — undviker
+    # "key-mgmt: property is missing" nar man inte vill ange losen igen.
+    profile = _profile_ssid_map().get(ssid)
+    if profile and not password:
+        cmd = ["sudo", "-n", "nmcli", "connection", "up", profile]
+    else:
+        cmd = ["sudo", "-n", "nmcli", "dev", "wifi", "connect", ssid]
+        if password:
+            cmd += ["password", password]
     code, out, err = _run(cmd, timeout=40)
     if code == 0:
         return True, out.strip() or "ansluten"
