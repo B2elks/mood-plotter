@@ -491,6 +491,31 @@ async def admin_replot_handler(request):
     return web.json_response({"ok": sent, "svg": target.svg_name})
 
 
+async def replot_handler(request):
+    """Skicka ett sparat kort igen från kiosken, utan ny bildgenerering."""
+    if not _check_pi_auth(request):
+        return web.json_response({"ok": False, "error": "unauthorized"}, status=401)
+    try:
+        data = await request.json()
+    except (ValueError, TypeError):
+        return web.json_response({"ok": False, "error": "invalid request"}, status=400)
+    if not isinstance(data, dict) or not isinstance(data.get("svg"), str):
+        return web.json_response({"ok": False, "error": "missing svg"}, status=400)
+    cards = card_store.list_cards(config.CARDS_DIR)
+    target = next((c for c in cards if c.svg_name == data["svg"]), None)
+    if target is None:
+        return web.json_response({"ok": False, "error": "card not found"}, status=404)
+    root = config.CARDS_DIR.resolve()
+    path = (root / target.svg_name).resolve()
+    if path.parent != root or path.suffix != ".svg" or not path.is_file():
+        return web.json_response({"ok": False, "error": "card not found"}, status=404)
+    sent = await request.app["ws_dispatcher"].send_svg(path.read_text())
+    if not sent:
+        return web.json_response({"ok": False, "error": "plotter unavailable"}, status=503)
+    log.info("kiosk replot: %s", target.svg_name)
+    return web.json_response({"ok": True, "svg": target.svg_name})
+
+
 async def draw_frame_handler(request):
     """Plotta en 10x10cm ram for pen-kalibrering — sa man ser var
     AxiDraw:n hamnar pa pappret innan ett riktigt kort plottas."""
@@ -564,6 +589,7 @@ def create_app():
     app.router.add_post("/admin/trigger", admin_trigger_handler)
     app.router.add_post("/admin/replot", admin_replot_handler)
     app.router.add_post("/draw-frame", draw_frame_handler)
+    app.router.add_post("/api/replot", replot_handler)
     app.router.add_get("/cards/{name}", cards_handler)
     app.router.add_post("/trigger", trigger_handler)
     app.router.add_get("/api/phone", phone_get_handler)

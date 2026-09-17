@@ -131,7 +131,7 @@ def forget_wifi(name: str) -> tuple[bool, str]:
 
 
 def list_networks() -> list[dict]:
-    _run(["nmcli", "dev", "wifi", "rescan"], timeout=8)
+    _run(["sudo", "-n", "nmcli", "dev", "wifi", "rescan"], timeout=8)
     code, out, _ = _run(
         ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY", "dev", "wifi", "list"],
         timeout=8,
@@ -272,6 +272,15 @@ def api_trigger():
     status, body = _server_request(
         "POST", "/trigger", body={"pi_id": "kiosk", "source": "manual"}
     )
+    return jsonify(body), status if status > 0 else 502
+
+
+@app.route("/api/replot", methods=["POST"])
+def api_replot():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("svg"), str):
+        return jsonify({"ok": False, "error": "missing svg"}), 400
+    status, body = _server_request("POST", "/api/replot", body={"svg": data["svg"]})
     return jsonify(body), status if status > 0 else 502
 
 

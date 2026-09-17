@@ -158,7 +158,7 @@
     background: rgba(0,0,0,0.9);
     font-size: 17px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-    z-index: 20;
+    z-index: 120;
   }
   #toast.show { display: block; }
 
@@ -198,8 +198,18 @@
     padding: 12px;
   }
   #modal.show { display: flex; }
+  #modal { flex-direction: column; gap: 10px; }
+  .replot-btn {
+    min-height: 48px; padding: 10px 16px;
+    border: 2px solid white; border-radius: 12px;
+    background: var(--teal); color: #11111c;
+    font: bold 18px -apple-system, "Helvetica Neue", sans-serif;
+    touch-action: manipulation; flex-shrink: 0;
+  }
+  .replot-btn:disabled { opacity: 0.45; }
+  #replot-latest { position: absolute; right: 12px; top: 66px; z-index: 10; }
   #modal img {
-    max-width: 100%; max-height: 100%;
+    max-width: 100%; max-height: calc(100% - 68px); min-height: 0; object-fit: contain;
     background: white;
     border-radius: 4px;
     box-shadow: 0 0 24px rgba(255,0,255,0.5);
@@ -230,6 +240,7 @@
 <a id="settings-btn" class="fab" href="/settings">&#9881;</a>
 <a id="wifi-btn" class="fab" href="/wifi-setup">📶</a>
 <button id="call-btn" class="fab" title="Ring nu">📞</button>
+<button id="replot-latest" class="replot-btn" disabled>Rita senaste igen</button>
 <div id="sms-banner">
   <div class="label">💬 SMS:a för ett mood-kort:</div>
   <div class="num" id="sms-num">+46766867361</div>
@@ -240,6 +251,7 @@
 <div id="modal">
   <button id="modal-close">✕</button>
   <img id="modal-img" alt="">
+  <button id="replot-selected" class="replot-btn">Rita bilden igen</button>
 </div>
 
 <script>
@@ -251,6 +263,14 @@ const timeEl = document.getElementById('latest-time');
 const thumbsEl = document.getElementById('thumbs');
 const toast = document.getElementById('toast');
 let lastPng = '';
+let selectedSvg = '';
+let replotBusy = false;
+const replotLatest = document.getElementById('replot-latest');
+const replotSelected = document.getElementById('replot-selected');
+function updateReplotButtons() {
+  replotLatest.disabled = replotBusy || !lastPng;
+  replotSelected.disabled = replotBusy || !selectedSvg;
+}
 let pendingSince = 0;  // unix-ts nar vi triggar samtal; rensas nar nyare kort dyker upp
 
 function showToast(msg, ms=2500) {
@@ -271,6 +291,7 @@ async function loadCards() {
     const cards = await res.json();
 
     const newest = (Array.isArray(cards) && cards.length) ? cards[0] : null;
+    replotLatest.disabled = replotBusy || !newest;
 
     // Om vi har triggat ett samtal och det inte finns nagot nyare kort an,
     // visa "Ett nytt kort ar pa vag..." overlay.
@@ -286,6 +307,7 @@ async function loadCards() {
       pendingEl.classList.remove('show');
       pendingSince = 0;
       if (!newest) {
+        lastPng = '';
         latestImg.style.display = 'none';
         noCard.style.display = 'block';
         timeEl.textContent = '';
@@ -324,6 +346,8 @@ async function loadCards() {
 const modal = document.getElementById('modal');
 const modalImg = document.getElementById('modal-img');
 function openModal(svgName) {
+  selectedSvg = svgName;
+  updateReplotButtons();
   modalImg.src = `${SERVER}/cards/${encodeURIComponent(svgName)}`;
   modal.classList.add('show');
 }
@@ -335,6 +359,37 @@ modal.addEventListener('click', (e) => {
 latestImg.addEventListener('click', () => {
   if (lastPng) openModal(lastPng);
 });
+
+async function replot(svgName) {
+  if (!svgName || replotBusy) return;
+  replotBusy = true;
+  updateReplotButtons();
+  showToast('Skickar bilden till plottern…', 0);
+  try {
+    const res = await fetch('/api/replot', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({svg: svgName}),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      showToast('Bilden har skickats till plottern', 3500);
+    } else if (data.error === 'plotter unavailable') {
+      showToast('Plottern är upptagen eller inte ansluten', 4000);
+    } else if (data.error === 'card not found') {
+      showToast('Bilden finns inte kvar', 4000);
+    } else {
+      showToast('Kunde inte skicka bilden. Försök igen.', 4000);
+    }
+  } catch (e) {
+    showToast('Anslutningen bröts. Kontrollera plottern innan du försöker igen.', 5000);
+  } finally {
+    replotBusy = false;
+    updateReplotButtons();
+  }
+}
+replotLatest.addEventListener('click', () => replot(lastPng));
+replotSelected.addEventListener('click', () => replot(selectedSvg));
 
 document.getElementById('call-btn').addEventListener('click', async () => {
   showToast('Ringer…', 0);
