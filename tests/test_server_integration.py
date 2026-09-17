@@ -33,6 +33,57 @@ async def test_trigger_requires_auth(client):
 
 
 @pytest.mark.asyncio
+async def test_replot_requires_auth(client):
+    resp = await client.post("/api/replot", json={"svg": "card.svg"})
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_replot_sends_selected_saved_svg(client, tmp_path):
+    import card_store
+    old = card_store.save_card(tmp_path / "cards", "old", b"png", "<svg>old</svg>")
+    card_store.save_card(tmp_path / "cards", "new", b"png", "<svg>new</svg>")
+    dispatcher = client.server.app["ws_dispatcher"]
+    with patch.object(dispatcher, "send_svg", new=AsyncMock(return_value=True)) as send:
+        resp = await client.post("/api/replot", json={"svg": old.svg_name},
+                                 headers={"Authorization": "Bearer test-token"})
+    assert resp.status == 200
+    assert (await resp.json())["svg"] == old.svg_name
+    send.assert_awaited_once_with("<svg>old</svg>")
+    assert len(card_store.list_cards(tmp_path / "cards")) == 2
+
+
+@pytest.mark.asyncio
+async def test_replot_unavailable_plotter(client, tmp_path):
+    import card_store
+    card = card_store.save_card(tmp_path / "cards", "card", b"png", "<svg/>")
+    resp = await client.post("/api/replot", json={"svg": card.svg_name},
+                             headers={"Authorization": "Bearer test-token"})
+    assert resp.status == 503
+    assert (await resp.json())["error"] == "plotter unavailable"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("body,status", [({}, 400), ([], 400), ({"svg": 1}, 400),
+                                          ({"svg": "missing.svg"}, 404),
+                                          ({"svg": "../config.py"}, 404)])
+async def test_replot_rejects_invalid_card(client, body, status):
+    resp = await client.post("/api/replot", json=body,
+                             headers={"Authorization": "Bearer test-token"})
+    assert resp.status == status
+
+
+@pytest.mark.asyncio
+async def test_replot_missing_svg_file(client, tmp_path):
+    import card_store
+    card = card_store.save_card(tmp_path / "cards", "gone", b"png", "<svg/>")
+    (tmp_path / "cards" / card.svg_name).unlink()
+    resp = await client.post("/api/replot", json={"svg": card.svg_name},
+                             headers={"Authorization": "Bearer test-token"})
+    assert resp.status == 404
+
+
+@pytest.mark.asyncio
 async def test_trigger_calls_46elks_when_authorized(client):
     with patch("server.elks_handler.initiate_call", new=AsyncMock(return_value="call-1")):
         resp = await client.post(

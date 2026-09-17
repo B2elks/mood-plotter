@@ -65,8 +65,73 @@ def is_online() -> bool:
     return "connected" in out.lower()
 
 
+def active_wifi_ssid() -> str:
+    code, out, _ = _run(
+        ["nmcli", "-t", "-f", "ACTIVE,SSID", "dev", "wifi"], timeout=5
+    )
+    if code != 0:
+        return ""
+    for line in out.splitlines():
+        if line.startswith("yes:"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
+def _profile_ssid_map() -> dict[str, str]:
+    """{ssid: profile_name} for alla sparade wifi-profiler (inkl netplan-*)."""
+    code, out, _ = _run(
+        ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"], timeout=5
+    )
+    if code != 0:
+        return {}
+    profiles = []
+    for line in out.splitlines():
+        parts = line.split(":")
+        if len(parts) < 2 or parts[1].strip() != "802-11-wireless":
+            continue
+        profiles.append(parts[0].strip())
+    result = {}
+    for name in profiles:
+        c2, ssid_out, _ = _run(
+            ["nmcli", "-t", "-g", "802-11-wireless.ssid", "connection", "show", name],
+            timeout=3,
+        )
+        if c2 == 0:
+            ssid = ssid_out.strip()
+            if ssid:
+                result[ssid] = name
+    return result
+
+
+def list_saved() -> list[dict]:
+    """Sparade wifi-profiler. netplan-* visas men kan inte glommas."""
+    active = active_wifi_ssid()
+    return [
+        {
+            "name": ssid,
+            "profile": prof,
+            "active": ssid == active,
+            "forgettable": not prof.startswith("netplan-"),
+        }
+        for ssid, prof in _profile_ssid_map().items()
+    ]
+
+
+def forget_wifi(name: str) -> tuple[bool, str]:
+    profiles = _profile_ssid_map()
+    prof = profiles.get(name, name)
+    if prof.startswith("netplan-"):
+        return False, "kan inte glomma natverk fran netplan"
+    code, out, err = _run(
+        ["sudo", "-n", "nmcli", "connection", "delete", prof], timeout=10
+    )
+    if code == 0:
+        return True, out.strip() or "borttagen"
+    return False, err.strip() or out.strip() or "okant fel"
+
+
 def list_networks() -> list[dict]:
-    _run(["nmcli", "dev", "wifi", "rescan"], timeout=8)
+    _run(["sudo", "-n", "nmcli", "dev", "wifi", "rescan"], timeout=8)
     code, out, _ = _run(
         ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY", "dev", "wifi", "list"],
         timeout=8,
@@ -96,9 +161,19 @@ def list_networks() -> list[dict]:
 
 
 def connect_wifi(ssid: str, password: str) -> tuple[bool, str]:
-    cmd = ["nmcli", "dev", "wifi", "connect", ssid]
-    if password:
-        cmd += ["password", password]
+    # netplan-managed connections require root via NetworkManager + polkit,
+    # so we shell out via sudo. Requires /etc/sudoers.d/mood-plotter-wifi
+    # to grant `pi` NOPASSWD on /usr/bin/nmcli — install.sh sets that up.
+    #
+    # For redan sparade SSID:n: anvand `connection up <profile>` — undviker
+    # "key-mgmt: property is missing" nar man inte vill ange losen igen.
+    profile = _profile_ssid_map().get(ssid)
+    if profile and not password:
+        cmd = ["sudo", "-n", "nmcli", "connection", "up", profile]
+    else:
+        cmd = ["sudo", "-n", "nmcli", "dev", "wifi", "connect", ssid]
+        if password:
+            cmd += ["password", password]
     code, out, err = _run(cmd, timeout=40)
     if code == 0:
         return True, out.strip() or "ansluten"
@@ -116,7 +191,12 @@ def index():
 
 @app.route("/wifi-setup")
 def wifi_setup():
-    return render_template("wifi_setup.html")
+    resp = app.make_response(render_template("wifi_setup.html"))
+    # Tvinga chromium att alltid hamta farsken — vi har sett browsern fastna pa
+    # gammal HTML/JS efter deploy.
+    resp.headers["Cache-Control"] = "no-store, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp
 
 
 @app.route("/phone")
@@ -149,6 +229,21 @@ def api_networks():
     return jsonify(list_networks())
 
 
+@app.route("/api/saved")
+def api_saved():
+    return jsonify({"saved": list_saved(), "active": active_wifi_ssid()})
+
+
+@app.route("/api/forget", methods=["POST"])
+def api_forget():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"ok": False, "error": "saknar namn"}), 400
+    ok, msg = forget_wifi(name)
+    return jsonify({"ok": ok, "message": msg, "error": "" if ok else msg})
+
+
 @app.route("/api/status")
 def api_status():
     return jsonify({"online": is_online()})
@@ -177,6 +272,15 @@ def api_trigger():
     status, body = _server_request(
         "POST", "/trigger", body={"pi_id": "kiosk", "source": "manual"}
     )
+    return jsonify(body), status if status > 0 else 502
+
+
+@app.route("/api/replot", methods=["POST"])
+def api_replot():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("svg"), str):
+        return jsonify({"ok": False, "error": "missing svg"}), 400
+    status, body = _server_request("POST", "/api/replot", body={"svg": data["svg"]})
     return jsonify(body), status if status > 0 else 502
 
 

@@ -1,10 +1,12 @@
 [Unit]
 Description=Mood Plotter — Sway-kiosk pa LCD:n
-# udev-settle: vanta tills 99-waveshare-touch.rules har applicerats sa
-# FT5x06 ar klassad som touchscreen INNAN sway startar. Utan detta kan
-# sway plocka upp enheten som mus i forsta forsoket → ingen touch.
-After=mood-plotter-wifi.service graphical.target systemd-udev-settle.service
-Wants=mood-plotter-wifi.service systemd-udev-settle.service
+# Touch-race: 99-waveshare-touch.rules maste ha applicerats sa libinput
+# klassar FT5x06 som touchscreen (inte mus) INNAN sway startar. systemd-udev-settle
+# ar deprecated och stundtals opalitlig — vi tvingar fram klassning explicit i
+# ExecStartPre nedan, och har en separat watchdog som restartar sway om touchen
+# anda inte synks (mood-plotter-touch-watchdog.timer).
+After=mood-plotter-wifi.service graphical.target
+Wants=mood-plotter-wifi.service
 
 [Service]
 Type=simple
@@ -23,6 +25,10 @@ Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=WLR_NO_HARDWARE_CURSORS=1
 Environment=XDG_SEAT=seat0
 Environment=XDG_VTNR=1
+# Tvinga om-klassning av input-enheter sa 99-waveshare-touch.rules
+# garanterat har korts innan sway startar.
+ExecStartPre=+/usr/bin/udevadm trigger --subsystem-match=input
+ExecStartPre=+/usr/bin/udevadm settle --timeout=10
 # Sway istallet for cage: sway har 'seat * hide_cursor 0' som
 # definitivt doljer muspekaren. Cage saknar den featuren och dess
 # default-cursor-fallback gick inte att doverstyra via XCURSOR_THEME.

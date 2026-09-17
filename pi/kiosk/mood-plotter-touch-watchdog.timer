@@ -1,0 +1,10 @@
+[Unit]
+Description=Mood Plotter — kor touch-check periodiskt
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=60s
+Unit=mood-plotter-touch-watchdog.service
+
+[Install]
+WantedBy=timers.target
